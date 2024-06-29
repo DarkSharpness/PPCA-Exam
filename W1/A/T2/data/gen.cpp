@@ -11,7 +11,7 @@ struct worker {
     std::uniform_int_distribution<std::size_t> gen;
     const int n;
 
-    worker(int n) : edges(), device(114514), gen(), n(n) {}
+    worker(int n, int hint) : edges(), device(hint), gen(), n(n) {}
 
     bool add_edge(int u, int v) {
         return edges.insert({u, v}).second;
@@ -72,17 +72,18 @@ struct worker {
 
 
 signed main() {
-    const int num[10] = {
+    const int num[20] = {
         5, 10, 100, 1000, 5000,
-        6000, 7000, 8000, 9000, 10000
+        6000, 7000, 8000, 9000, 10000,
+        10000, 10000, 10000, 10000, 10000,
+        20000, 30000, 40000, 40000, 40000
     };
 
-    for (int i = 1; i <= 10; i++) {
+    for (int i = 1; i <= 20; i++) {
         std::ofstream input(std::to_string(i) += ".in");
-        std::ofstream output(std::to_string(i) += ".out");
 
         const int n = num[i - 1];
-        worker w {n};
+        worker w {n, 114514 + i * i};
 
         w.select();
         w.select();
