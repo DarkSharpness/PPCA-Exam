@@ -74,6 +74,8 @@ int main() {
     if(x < 2 * n) {
         puts("No");
         return 0;
+    } else {
+        puts("Yes");
     }
     rep(i, 1, n) {
         for(int &x: A.G[i]) {
