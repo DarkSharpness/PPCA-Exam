@@ -49,34 +49,34 @@ bool solve(int n, int m) {
 
     // Rank right from smallest to largest
     std::priority_queue<int, std::vector<int>, cmp_right> q;
-    int i = 0;
-    int j = 0;
+    int i = 0;  // x[i], l from smallest to largest
+    int j = 0;  // y[j], l from smallest to largest
     while (j < m) {
         while (i < n && x[i].l <= y[j].l)
             q.push(i++);
 
-        while (114514) {
-            if (q.empty()) return false; // No solution
+        // can not cover y[j]
+        while (!q.empty() && x[q.top()].r < y[j].l)
+            q.pop();
 
-            int k = q.top(); q.pop();
+        if (q.empty()) {
+            // No solution
+            return false;
+        }
 
-            // x[k].l <= y[j].l
-            // x[k].r must be the smallest
-            assert(x[k].l <= y[j].l);
+        int i = q.top(); q.pop();
+        assert(x[i].l <= y[j].l && x[i].r >= y[j].l);
 
-            if (x[k].r >= y[j].r) {
-                z[k] = y[j];
-                ++j; break;
-            }
-
-            // y[k].l <= x[k].r < y[j].r
-            if (x[k].r >= y[k].l) {
-                y[j].l = x[k].r;
-                z[k] = y[j];
-                break;
-            }
-
-            // k is useless here
+        if (x[i].r >= y[j].r) {
+            // y[j] is covered by x[i]
+            z[i].l = y[j].l;
+            z[i].r = y[j].r;
+            ++j;
+        } else {
+            // y[j] is partially covered by x[i]
+            z[i].l = y[j].l;
+            z[i].r = x[i].r;
+            y[j].l = x[i].r;
         }
     }
     return true;
@@ -84,12 +84,12 @@ bool solve(int n, int m) {
 
 
 signed main() {
-    int n, m;
     std::ios_base::sync_with_stdio(false);
 
+    int n, m;
     std::cin >> n >> m;
 
-    for (int i = 0; i < m; ++i)
+    for (int i = 0; i < n; ++i)
         std::cin >> x[i].l >> x[i].r;
 
     for (int i = 0; i < m; ++i)
