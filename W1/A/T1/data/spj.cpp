@@ -4,6 +4,8 @@
 #include <vector>
 #include <span>
 #include <set>
+#include <ranges>
+#include <algorithm>
 
 // Lines of integers.
 
@@ -15,12 +17,19 @@ int extract_int(std::string_view &str) {
 
     if (str.empty()) return 0;
 
+    bool flag = false;
+    if (str.starts_with('-')) {
+        flag = true;
+        str.remove_prefix(1);
+    }
+
     int result = 0;
     while (str.size()) {
         if (!std::isdigit(str[0])) break;
         result = result * 10 + (str[0] - '0');
     }
-    return result;
+
+    return flag ? -result : result;
 }
 
 std::optional <_Vec> read(std::istream& file) {
@@ -37,8 +46,31 @@ std::optional <_Vec> read(std::istream& file) {
     return result;
 }
 
-std::set <std::pair <int, int>> edges;
-std::size_t node_count;
+struct interval {
+    int l, r;
+    friend auto operator<=>(const interval&, const interval&) = default;
+    friend bool operator==(const interval&, const interval&) = default;
+};
+
+std::vector <interval> x;
+std::vector <interval> y;
+
+auto merge(std::vector <interval> t) {
+    std::vector <interval> z;
+    interval current = t[0];
+
+    for (std::size_t i = 1; i < t.size(); ++i) {
+        if (current.r < t[i].l) {
+            z.push_back(current);
+            current = t[i];
+        } else {
+            current.r = std::max(current.r, t[i].r);
+        }
+    }
+
+    z.push_back(current);
+    return z;
+}
 
 void init_graph(_Vec vec) {
     if (vec.empty()) return;
@@ -47,42 +79,31 @@ void init_graph(_Vec vec) {
     auto [n, m] = slice[0];
     slice = slice.subspan(1);
 
-    if (slice.size() != std::size_t(m))
-        throw std::runtime_error("Duplicate edges");
+    if (slice.size() != n + m) throw std::runtime_error("Invalid input");
 
-    node_count = n;
-    for (auto edge : slice) edges.insert(edge);
-}
+    x.reserve(n);
+    for (auto [l, r] : slice.subspan(0, n)) x.push_back({l, r});
 
-void check_matching(std::span <std::pair <int, int>> vec) {
-    std::vector <bool> s(node_count + 1);
-    std::vector <bool> t(node_count + 1);
-    if (vec.size() != node_count)
-        throw std::runtime_error("Invalid matching size");
+    y.reserve(m);
+    for (auto [l, r] : slice.subspan(n, m)) y.push_back({l, r});
 
-    for (auto [a, b] : vec) {
-        if (s.at(a) || t.at(b))
-            throw std::runtime_error("Invalid matching");
-
-        s.at(a) = true;
-        t.at(b) = true;
-    }
+    y = merge(y);
 }
 
 void verify(_Vec vec) {
-    if (vec.empty()) return;
-    auto slice = std::span(vec);
-    for (auto edge : slice)
-        if (!edges.count(edge))
-            throw std::runtime_error("Invalid edge");
+    std::vector <interval> t;
 
-    std::set <std::pair <int, int>> visited;
-    for (auto edge : slice)
-        if (!visited.insert(edge).second)
-            throw std::runtime_error("Duplicate edge");
+    if (vec.size() != x.size()) throw std::runtime_error("Invalid output");
+    for (auto i : std::views::iota(0llu, vec.size())) {
+        auto old = x[i];
+        auto tmp = interval{ vec[i].first, vec[i].second };
+        if (tmp.l < 0 || tmp.r < 0) continue; // Do not use this interval
+        t.push_back(tmp);
+    }
 
-    check_matching(slice.subspan(0, node_count));
-    check_matching(slice.subspan(node_count));
+    t = merge(t);
+
+    if (t != y) throw std::runtime_error("Invalid output");
 }
 
 signed main(int argc, char* argv[]) {
@@ -95,20 +116,20 @@ signed main(int argc, char* argv[]) {
 
     try {
         init_graph(read(input).value());
-
         bool has_answer {};
         answer >> has_answer;
         if (!has_answer) {
             std::string tmp;
-            output >> tmp;
-            if (tmp == "No")
+            std::getline(output, tmp);
+            if (tmp.starts_with("No")) {
                 score << 1;
-            else
-                score << 0;     
+            } else {
+                score << 0;
+            }
         } else {
             std::string tmp;
-            output >> tmp;
-            if (tmp != "Yes") {
+            std::getline(output, tmp);
+            if (!tmp.starts_with("Yes")) {
                 score << 0;
             } else {
                 verify(read(output).value());
