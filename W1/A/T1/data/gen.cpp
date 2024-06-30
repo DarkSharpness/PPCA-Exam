@@ -17,11 +17,11 @@ seg gen_seg(int l, int r){
     return (seg){x, y};
 }
 int main() {
-    int n = 80000;
+    int n = 90000;
     
-    uniform_int_distribution<int> gen(1, 10000);
+    uniform_int_distribution<int> gen(1, 15000);
     rep(i, 1, n){
-        int xx = i * 1000, l = xx + gen(rng), r = xx + gen(rng);
+        int xx = i * 2000, l = xx + gen(rng), r = xx + gen(rng);
         if(l > r) 
             std::swap(l, r);
         if(l + 2 >= r) 
@@ -33,12 +33,12 @@ int main() {
         assert(b[i].l>=a[i].l&&b[i].r<=a[i].r);
     }
     int pp = 5e8, qq = 9e8;
-    // a[++n] = (seg){pp + 1, pp + 10}; b[n] = (seg){pp + 2, pp + 3};
-    // a[++n] = (seg){pp + 6, pp + 9};  b[n] = (seg){pp + 7, pp + 8};
-    // a[++n] = (seg){qq + 1, qq + 10}; b[n] = (seg){qq + 3, qq + 4};
-    // a[++n] = (seg){qq + 2, qq + 5};  b[n] = (seg){qq + 6, qq + 9};
-    // shuffle(a + 1, a + n + 1, rng);
-    // shuffle(b + 1, b + n + 1, rng);
+    a[++n] = (seg){pp + 1, pp + 10}; b[n] = (seg){pp + 2, pp + 3};
+    a[++n] = (seg){pp + 6, pp + 9};  b[n] = (seg){pp + 7, pp + 8};
+    a[++n] = (seg){qq + 1, qq + 10}; b[n] = (seg){qq + 3, qq + 4};
+    a[++n] = (seg){qq + 2, qq + 5};  b[n] = (seg){qq + 6, qq + 9};
+    shuffle(a + 1, a + n + 1, rng);
+    shuffle(b + 1, b + n + 1, rng);
     printf("%d %d\n", n, n);
     rep(i, 1, n){
         printf("%d %d%c",a[i].l, a[i].r, " \n"[i == n]);
