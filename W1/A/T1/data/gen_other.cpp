@@ -13,7 +13,7 @@ set<pair<int, int> > cur_seg;
 int main() {
     // fprintf(stderr, "now seed: %d\n",ttt);
     vector<seg> A;
-    int n = 99000, m = 89000, dd = 1500, kk = rng() % 10, tm = m - dd;
+    int n = 99000, m = 90000, dd = 1500, kk = rng() % 10, tm = m - dd;
     uniform_int_distribution<int> len1(1, 20000), len2(1, 15000);
     int x = 1;
     rep(i, 1, tm) {
@@ -68,7 +68,7 @@ int main() {
         A.push_back((seg){l, r});
     }
     shuffle(A.begin(), A.end(), rng);
-    printf("%d %d\n",(int)A.size(), m);
+    printf("%d %d\n",(int)A.size() + 4, m + 4);
     for(auto &[l, r]: A) {
         if(l == r) ++r;
         printf("%d %d ", l, r);
