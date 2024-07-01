@@ -57,6 +57,8 @@ struct Dinic{
 }A, B;
 int n, m, a[N], b[N];
 int main() {
+    freopen("2260/1.in", "r", stdin);
+    freopen("2260/1.out", "w", stdout);
     scanf("%d%d", &n, &m); 
     int S = n * 2 + 1, T = S + 1; A.n = B.n = T;
     rep(i, 1, n){

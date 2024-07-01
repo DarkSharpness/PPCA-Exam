@@ -19,21 +19,15 @@ int extract_int(std::string_view &str) {
     while (str.size()) {
         if (!std::isdigit(str[0])) break;
         result = result * 10 + (str[0] - '0');
+        str.remove_prefix(1);
     }
     return result;
 }
 
-std::optional <_Vec> read(std::istream& file) {
+_Vec read(std::istream& file) {
     _Vec result;
-    std::string buffer;
-    while (std::getline(file, buffer)) {
-        std::string_view str = buffer;
-        int a = extract_int(str);
-        int b = extract_int(str);
-        result.push_back({a, b});
-        for (auto &c : str)
-            if (!std::isspace(c)) return std::nullopt;
-    }
+    int x, y;
+    while (file >> x >> y) result.push_back({x, y});
     return result;
 }
 
@@ -48,10 +42,14 @@ void init_graph(_Vec vec) {
     slice = slice.subspan(1);
 
     if (slice.size() != std::size_t(m))
-        throw std::runtime_error("Duplicate edges");
+        throw std::runtime_error("Duplicate input edges");
 
     node_count = n;
-    for (auto edge : slice) edges.insert(edge);
+    for (auto edge : slice) {
+        edges.insert(edge);
+        if (edge.first < 1 || edge.first > n || edge.second < 1 || edge.second > n)
+            throw std::runtime_error("Invalid input node");
+    }
 }
 
 void check_matching(std::span <std::pair <int, int>> vec) {
@@ -74,12 +72,12 @@ void verify(_Vec vec) {
     auto slice = std::span(vec);
     for (auto edge : slice)
         if (!edges.count(edge))
-            throw std::runtime_error("Invalid edge");
+            throw std::runtime_error("Invalid edge in output");
 
     std::set <std::pair <int, int>> visited;
     for (auto edge : slice)
         if (!visited.insert(edge).second)
-            throw std::runtime_error("Duplicate edge");
+            throw std::runtime_error("Duplicate edge in output");
 
     check_matching(slice.subspan(0, node_count));
     check_matching(slice.subspan(node_count));
@@ -94,24 +92,23 @@ signed main(int argc, char* argv[]) {
     std::string str, tmp;
 
     try {
-        init_graph(read(input).value());
+        init_graph(read(input));
 
         bool has_answer {};
         answer >> has_answer;
+        std::string tmp;
+        output >> tmp;
         if (!has_answer) {
-            std::string tmp;
-            output >> tmp;
-            if (tmp == "No")
+            if (tmp.starts_with("No")) {
                 score << 1;
-            else
-                score << 0;     
+            } else {
+                score << 0;
+            }
         } else {
-            std::string tmp;
-            output >> tmp;
-            if (tmp != "Yes") {
+            if (!tmp.starts_with("Yes")) {
                 score << 0;
             } else {
-                verify(read(output).value());
+                verify(read(output));
                 score << 1;
             }
         }
