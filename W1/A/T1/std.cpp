@@ -70,8 +70,8 @@ bool solve(int n, int m) {
         } else {
             // y[j] is partially covered by x[k]
             z[k].l = y[j].l;
-            z[i].r = x[k].r;
-            y[j].l = x[i].r;
+            z[k].r = x[k].r;
+            y[j].l = x[k].r;
         }
     }
     return true;
