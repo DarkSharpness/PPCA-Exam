@@ -9,101 +9,71 @@
 
 // Lines of integers.
 
-using _Vec = std::vector <std::pair <int, int>>;
-
-int extract_int(std::string_view &str) {
-    while (str.size() && std::isspace(str[0]))
-        str.remove_prefix(1);
-
-    if (str.empty()) return 0;
-
-    bool flag = false;
-    if (str.starts_with('-')) {
-        flag = true;
-        str.remove_prefix(1);
-    }
-
-    int result = 0;
-    while (str.size()) {
-        if (!std::isdigit(str[0])) break;
-        result = result * 10 + (str[0] - '0');
-    }
-
-    return flag ? -result : result;
-}
-
-std::optional <_Vec> read(std::istream& file) {
-    _Vec result;
-    std::string buffer;
-    while (std::getline(file, buffer)) {
-        std::string_view str = buffer;
-        int a = extract_int(str);
-        int b = extract_int(str);
-        result.push_back({a, b});
-        for (auto &c : str)
-            if (!std::isspace(c)) return std::nullopt;
-    }
-    return result;
-}
-
 struct interval {
-    int l, r;
-    friend auto operator<=>(const interval&, const interval&) = default;
-    friend bool operator==(const interval&, const interval&) = default;
+    int l; int r;
+    friend bool operator == (const interval &lhs, const interval &rhs) = default;
+    friend auto operator <=> (const interval &lhs, const interval &rhs) = default;
 };
 
-std::vector <interval> x;
-std::vector <interval> y;
+using _Vec = std::vector <interval>;
 
-auto merge(std::vector <interval> t) {
-    std::vector <interval> z;
-    interval current = t[0];
+_Vec read(std::istream &input) {
+    int x, y;
+    _Vec res;
+    while (input >> x >> y)
+        res.push_back({x, y});
+    return res;
+}
 
+_Vec x;
+_Vec y;
+
+void init_graph(_Vec t) {
+    auto [n, m] = t.at(0);
+    x.clear(); y.clear();
+    if (n + m + 1 != t.size())
+        throw std::runtime_error("Invalid input");
+    for (int i = 1; i <= n; ++i)
+        x.push_back(t.at(i));
+    for (int i = n + 1; i <= n + m; ++i)
+        y.push_back(t.at(i));
+}
+
+_Vec merge(_Vec t) {
+    std::ranges::sort(t);
+    auto tmp = t.front();
+    _Vec z;
     for (std::size_t i = 1; i < t.size(); ++i) {
-        if (current.r < t[i].l) {
-            z.push_back(current);
-            current = t[i];
-        } else {
-            current.r = std::max(current.r, t[i].r);
+        auto [a, b] = t.at(i);
+        if (a <= tmp.r) { // Can merge
+            tmp.r = std::max(tmp.r, b);
+        } else { // Else, push back and update tmp
+            z.push_back(tmp);
+            tmp = t.at(i);
         }
     }
-
-    z.push_back(current);
+    z.push_back(tmp);
     return z;
 }
 
-void init_graph(_Vec vec) {
-    if (vec.empty()) return;
-    auto slice = std::span(vec);
+void verify(_Vec t) {
+    if (t.size() != x.size())
+        throw std::runtime_error("Mismatched output length!");
 
-    auto [n, m] = slice[0];
-    slice = slice.subspan(1);
-
-    if (slice.size() != n + m) throw std::runtime_error("Invalid input");
-
-    x.reserve(n);
-    for (auto [l, r] : slice.subspan(0, n)) x.push_back({l, r});
-
-    y.reserve(m);
-    for (auto [l, r] : slice.subspan(n, m)) y.push_back({l, r});
-
-    y = merge(y);
-}
-
-void verify(_Vec vec) {
-    std::vector <interval> t;
-
-    if (vec.size() != x.size()) throw std::runtime_error("Invalid output");
-    for (auto i : std::views::iota(0llu, vec.size())) {
-        auto old = x[i];
-        auto tmp = interval{ vec[i].first, vec[i].second };
-        if (tmp.l < 0 || tmp.r < 0) continue; // Do not use this interval
-        t.push_back(tmp);
+    _Vec z;
+    for (std::size_t i = 0 ; i < t.size(); ++i) {
+        auto [a, b] = x.at(i);
+        auto [c, d] = t.at(i);
+        if (c == -1 && d == -1) continue;
+        if (c < a || d > b || c > d) {
+            std::cerr << a << ' ' << b << ' ' << c << ' ' << d << '\n';
+            throw std::runtime_error("Invalid interval");
+        }
+        z.push_back({c, d});
     }
 
-    t = merge(t);
-
-    if (t != y) throw std::runtime_error("Invalid output");
+    if (merge(z) != merge(y))
+        throw std::runtime_error("Mismatched intervals");
 }
 
 signed main(int argc, char* argv[]) {
@@ -115,24 +85,22 @@ signed main(int argc, char* argv[]) {
     std::string str, tmp;
 
     try {
-        init_graph(read(input).value());
+        init_graph(read(input));
         bool has_answer {};
+        std::string tmp;
+        std::getline(output, tmp);
         answer >> has_answer;
         if (!has_answer) {
-            std::string tmp;
-            std::getline(output, tmp);
             if (tmp.starts_with("No")) {
                 score << 1;
             } else {
                 score << 0;
             }
         } else {
-            std::string tmp;
-            std::getline(output, tmp);
             if (!tmp.starts_with("Yes")) {
                 score << 0;
             } else {
-                verify(read(output).value());
+                verify(read(output));
                 score << 1;
             }
         }

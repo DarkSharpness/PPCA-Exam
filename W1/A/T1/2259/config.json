@@ -26,6 +26,6 @@
         { "ID": 10, "Dependency": 0, "TimeLimit": 1000, "MemoryLimit": 268435456, "DiskLimit": 0, "ValgrindTestOn": false }
     ],
     "CompileTimeLimit": 10000,
-    "SPJ": 3,
+    "SPJ": 1,
     "Scorer": 0
 }

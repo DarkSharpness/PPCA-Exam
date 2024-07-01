@@ -95,11 +95,10 @@ void sort_x(int n) {
     std::sort(p, p + n, cmp);
 
     for (int i = 0; i < n; ++i) {
-        mapping[i] = p[i].pos;
+        mapping[p[i].pos] = i;
         x[i] = p[i].i;
     }
 }
-
 
 signed main() {
     std::ios_base::sync_with_stdio(false);
@@ -127,7 +126,5 @@ signed main() {
         std::cout << "No, darksharpness out\n";
     }
 
-    for (int i = 0 ; i < n ; ++i)
-        assert(z[i].l == -1 || (z[i].l >= x[i].l && z[i].r <= x[i].r));
     return 0;
 }
