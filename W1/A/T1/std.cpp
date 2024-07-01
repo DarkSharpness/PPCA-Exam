@@ -17,10 +17,6 @@ interval x[N];
 interval y[N];
 interval z[N]; // Answer
 
-bool cmp(interval a, interval b) {
-    return a.l < b.l;
-}
-
 struct cmp_right {
     bool operator() (int a, int b) const {
         return x[a].r > x[b].r;
@@ -28,6 +24,7 @@ struct cmp_right {
 };
 
 int sort_y(int m) {
+    auto cmp = [](interval a, interval b) { return a.l < b.l; };
     std::sort(y, y + m, cmp);
     interval current = y[0];
     int cnt = 0;
@@ -59,27 +56,48 @@ bool solve(int n, int m) {
         while (!q.empty() && x[q.top()].r < y[j].l)
             q.pop();
 
-        if (q.empty()) {
-            // No solution
-            return false;
-        }
+        // No solution
+        if (q.empty()) return false;
 
-        int i = q.top(); q.pop();
-        assert(x[i].l <= y[j].l && x[i].r >= y[j].l);
+        int k = q.top(); q.pop();
+        assert(x[k].l <= y[j].l && x[k].r >= y[j].l);
 
-        if (x[i].r >= y[j].r) {
-            // y[j] is covered by x[i]
-            z[i].l = y[j].l;
-            z[i].r = y[j].r;
+        if (x[k].r >= y[j].r) {
+            // y[j] is covered by x[k]
+            z[k].l = y[j].l;
+            z[k].r = y[j].r;
             ++j;
         } else {
-            // y[j] is partially covered by x[i]
-            z[i].l = y[j].l;
-            z[i].r = x[i].r;
+            // y[j] is partially covered by x[k]
+            z[k].l = y[j].l;
+            z[i].r = x[k].r;
             y[j].l = x[i].r;
         }
     }
     return true;
+}
+
+int mapping[N];
+
+void sort_x(int n) {
+    struct pack {
+        int pos;
+        interval i;
+    };
+    static pack p[N];
+
+    auto cmp = [](pack a, pack b) { return a.i.l < b.i.l; };
+    for (int i = 0; i < n; ++i) {
+        p[i].pos = i;
+        p[i].i = x[i];
+    }
+
+    std::sort(p, p + n, cmp);
+
+    for (int i = 0; i < n; ++i) {
+        mapping[i] = p[i].pos;
+        x[i] = p[i].i;
+    }
 }
 
 
@@ -97,15 +115,19 @@ signed main() {
  
     m = sort_y(m); // update m to new ranges
 
-    std::sort(x, x + n, cmp);
+    sort_x(n);
 
     if (solve(n, m)) {
         std::cout << "Yes, your majesty\n";
-        for (int i = 0; i < n; ++i)
-            std::cout << z[i].l << ' ' << z[i].r << '\n';
+        for (int i = 0; i < n; ++i) {
+            int k = mapping[i];           
+            std::cout << z[k].l << ' ' << z[k].r << '\n';
+        }
     } else {
         std::cout << "No, darksharpness out\n";
     }
 
+    for (int i = 0 ; i < n ; ++i)
+        assert(z[i].l == -1 || (z[i].l >= x[i].l && z[i].r <= x[i].r));
     return 0;
 }
