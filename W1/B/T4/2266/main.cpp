@@ -55,7 +55,7 @@ int main() {
 	}
 	else {
 		std::cout << "Incorrect\n";
-	}
+	}	
 	std::cout << token << std::endl;
 	return 0;
 }

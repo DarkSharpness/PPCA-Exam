@@ -30,7 +30,7 @@ int main() {
 	size_t stringLength = 8;// 生成的随机字符串长度
 
 	clock_t start = clock();// 记录开始时间
-
+	
 	while (true) {
 		std::string randomString = generateRandomString(stringLength);
 		unsigned int hashValue = simpleHash(randomString);
