@@ -2,15 +2,20 @@
 #include <iostream>
 #include <fstream>
 
-int test(std::istream &in, std::ostream &out) {
+double test(std::istream &in, std::ostream &out) {
     switch (int x; (in >> x), x) {
         case hidden::Corrupted_handle:
             out << "Callback handle corrupted!\n";
-            return 0;
+            return 0.5;
 
         case hidden::Request_too_much:
             out << "Failure after " << hidden::trials << " trials!\n";
-            return 0;
+            if (unsigned y; in >> y && y <= 48) {
+                out << "Mismatch character count: " << y << '\n';
+                return (48 - y) / (48.0 * 2);
+            } else {
+                return 0;
+            }
 
         case hidden::Request_success:
             if (std::size_t y; in >> y && y == hidden::checksum) {

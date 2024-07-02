@@ -7,7 +7,7 @@ void verifier(callback &f);
 
 void hack(callback &f) {
     f.reset(verifier);
-    f.init_args<bool>(true);
+    f.init_args<int>(0);
 }
 
 void request(callback &f) {

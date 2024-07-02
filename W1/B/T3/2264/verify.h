@@ -1,7 +1,6 @@
 #pragma once
 #include "callback.h"
 #include "hidden.h"
-#include "src.hpp"
 #include <cstring>
 
 struct buffer {
@@ -15,9 +14,10 @@ void func(callback &read, callback &verifier) {
     return verifier.call();
 }
 
-static void verifier(callback &f) {
+void verifier(callback &f) {
     auto &args = f.get_args<buffer>();
-    bool result = hidden::authenticate(args.storage);
+    // Count of mismatched characters
+    int mismatches = hidden::cmp(args.storage);
     f.destruct_args<buffer>();
-    f.init_args<bool>(result);
+    f.init_args<int>(mismatches);
 }

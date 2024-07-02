@@ -2,7 +2,17 @@
 
 namespace hidden {
 
-bool authenticate(const char *) { return false; }
+int cmp(const char *str) {
+    static constexpr char target[48] =
+        "destroy everthing 压力测试 😅 🤣　";
+
+    int cnt = 0;
+
+    for (int i = 0 ; i < 48 ; ++i)
+        if (str[i] != target[i]) ++cnt;
+
+    return cnt;
+}
 
 enum Output {
     Corrupted_handle,
