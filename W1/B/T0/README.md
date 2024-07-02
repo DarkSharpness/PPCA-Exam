@@ -1,26 +1,11 @@
-# 整数回绕
+# Dark 帝国 - 堕落
 
-输出一个整数, 使得下面一个程序能输出 Welcome.
+> 坠入无尽的黑暗......
 
-```C++
-#include <iostream>
-#include <numeric>
+光芒褪去, 映入眼帘的只有无边的黑暗, 以及...... 前方的 Dark 帝国.
 
-signed main() {
-    constexpr std::size_t threshold = std::numeric_limits<int>::max();
+"我是谁, 我为什么会在这里?". 带着困惑, 你一步一步走向前方的黑暗城墙.
 
-    int x;
-    std::cin >> x;
+矗立在门口的, 是帝国的机器守卫者. "你不准加入 Dark Impart!" 只听一声怒吼, 手起刀落, 又一条无辜的生命消逝了. 这样的场景在 Dark 帝国每天都会上演, 只有 "绝对" 忠诚的人才能入内.
 
-    if (!std::cin) {
-        std::cout << "wtf dude\n";
-        return 0;
-    }
-
-    if (int abs = x < 0 ? -x : x; abs > threshold) {
-        std::cout << "Welcome!\n";
-    } else {
-        std::cout << "You are not allowed to enter!\n";
-    }
-}
-```
+这可如何是好啊, 啥都不知道的你只能在城墙外徘徊窥探. 仔细观察后, 你突然发现, 原来所谓机器人, 只是一个机械的程序, 甚至连运行的程序都刻在了机器人的胸口......

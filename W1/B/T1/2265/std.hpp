@@ -1,16 +1,17 @@
 #pragma once
 
+#include <array>
 #include <iostream>
 #include <unordered_map>
 
 template <typename T>
-struct tester;
+struct constant;
 
 template <>
-struct tester <int> {
+struct constant <int> {
     int x;
-    tester (int y) : x (y) {}
-    bool operator == (const tester <int> &) const = default;
+    constant (int y) : x (y) {}
+    bool operator == (const constant <int> &) const = default;
 };
 
 template <typename T>
@@ -47,31 +48,32 @@ struct fraction <ll> {
 };
 
 template <>
-struct fraction <int> {
+struct fraction <void> {
     fraction() { std::exit(0); }
 };
 
 template <typename T, int N>
 struct array {
   private:
+    using storage_t = std::array <T, N>;
     char token;
-    inline static std::unordered_map <const void *, T *> mapping;
+    inline static std::unordered_map <const void *, storage_t> mapping {};
 
-    T &get(int x) { return mapping[static_cast <const void *> (this)][x]; }
+    T &get(int x) {
+        return mapping[static_cast <const void *> (this)][x];
+    }
 
   public:
-
     array() {
-        mapping[static_cast <const void *> (this)] = new T[N];
+        mapping[static_cast <const void *> (this)] = {};
     }
 
     ~array() {
-        delete[] mapping[static_cast <const void *> (this)];
         mapping.erase(static_cast <const void *> (this));
     }
 
-    T &operator [] (int x) { return get(x); }
-    const T &operator [] (int x) const { return get(x); }
+    T &operator [] (int x) { return this->get(x); }
+    const T &operator [] (int x) const { return this->get(x); }
 };
 
 char *my_string() { static char s[4] = {}; return s; }
