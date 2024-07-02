@@ -8,12 +8,14 @@ struct buffer {
     buffer(const buffer &src) { std::strcpy(storage, src.storage); }
 };
 
-void func(callback &read, callback &verifier) {
-    read.call();
-    verifier.init_args <buffer> (read.get_args<buffer>());
-    return verifier.call();
+int verify(callback &request, callback &verifier) {
+    request.call();
+    verifier.init_args <buffer> (request.get_args<buffer>());
+    verifier.call();
+    return verifier.get_args<int>();
 }
 
+// A possible implementation of the verifier
 void verifier(callback &f) {
     auto &args = f.get_args<buffer>();
     // Count of mismatched characters
