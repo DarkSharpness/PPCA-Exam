@@ -1,14 +1,28 @@
 #include "database.h"
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <unordered_set>
 
 double test(std::istream &output, std::ostream &message) {
-    std::string name, code;
+    std::string name;
     std::size_t correct = 0;
     std::unordered_set <std::string> names;
+    std::string code;
+    std::size_t length;
+    std::vector <std::uint32_t> array;
 
-    while (output >> name >> code) {
+    while (output >> name >> length) {
+        if (length > 100) {
+            message << "Too many elements for " << name << ": " << length << '\n';
+            continue;
+        }
+        array.resize(length);
+        for (std::size_t i = 0; i < length; ++i)
+            output >> array[i];
+        code.resize(length);
+        for (std::size_t i = 0; i < length; ++i)
+            code[i] = array[i];
         if (!names.insert(name).second) {
             message << "Duplicate user name: " << name << '\n';
         } else if (!database::verify(name, code)) {
