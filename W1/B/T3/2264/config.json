@@ -1,7 +1,8 @@
 {
   "SupportedFiles": [
     "callback.h",
-    "hidden.h"
+    "hidden.h",
+    "verify.h"
   ],
   "Groups": [
     {
