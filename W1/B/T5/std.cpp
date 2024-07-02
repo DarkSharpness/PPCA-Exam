@@ -24,7 +24,7 @@ std::string generateRandomString(size_t length) {
 }
 
 int main() {
-	auto target_hash = simpleHash("abcdefgh");
+	auto target_hash = 0x46ee11e;
 	std::unordered_map<unsigned int, std::string> hashMap;
 	srand(time(0));         // 初始化随机种子
 	size_t stringLength = 8;// 生成的随机字符串长度
