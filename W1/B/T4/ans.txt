@@ -1,0 +1,2 @@
+query query_score/Prof Dark..txt ;; echo 100 >> ProfDark
+exit

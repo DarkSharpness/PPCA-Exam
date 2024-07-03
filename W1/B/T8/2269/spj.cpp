@@ -1,10 +1,16 @@
 #include "hidden.h"
 #include <iostream>
 #include <fstream>
-#include <cmath>
 
 double test(std::istream &in, std::ostream &out) {
-    switch (int x; (in >> x), x) {
+    int x;
+
+    if (!(in >> x)) {
+        out << "Corrupted output!\n";
+        return 0;
+    }
+
+    switch (x) {
         case hidden::Corrupted_handle:
             out << "Callback handle corrupted!\n";
             return 0.5;

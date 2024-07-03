@@ -20,7 +20,7 @@
 		}
 	],
 	"CompileTimeLimit": 30000,
-	"SPJ": 1,
+	"SPJ": 5,
 	"SupportedFiles": [
 		"game.h",
 		"verify.h"

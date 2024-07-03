@@ -1,6 +1,7 @@
 #pragma once
 
 #include "verify.h"
+#include <algorithm>
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 constexpr int cntShapes = 7;
 
@@ -131,7 +131,9 @@ public:
 		std::cout << "Game Over" << std::endl;
 		std::cout << score << std::endl;
 		verify_output(score);
-		exit(0);
+		// exit(0);
+		std::cout << "throw " << score << std::endl;
+		throw score;
 	}
 };
 

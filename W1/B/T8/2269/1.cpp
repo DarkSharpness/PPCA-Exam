@@ -1,8 +1,9 @@
-#include "src.hpp"
 #include "hidden.h"
 #include "verify.h"
 #include <cstring>
 #include <iostream>
+
+callback get_request();
 
 signed main() {
     std::size_t counter = hidden::trials;
@@ -24,3 +25,5 @@ signed main() {
     std::cout << hidden::Request_too_much;
     return 0;
 }
+
+#include "src.hpp"

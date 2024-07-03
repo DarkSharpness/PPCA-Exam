@@ -12,14 +12,7 @@ double test(std::istream &output, std::ostream &message) {
     std::size_t length;
     std::vector <std::uint32_t> array;
 
-    std::size_t sum {};
-
     while (output >> name >> length) {
-        sum += length + 1;
-        if (sum > 10000) {
-            message << "Input too long!\nwtf are u doing, hacker?\n";
-            return 0;
-        }
         if (length > 100) {
             message << "Too many elements for " << name << ": " << length << '\n';
             continue;
@@ -40,7 +33,7 @@ double test(std::istream &output, std::ostream &message) {
         }
     }
 
-    return static_cast <double> (correct) / database::init_map().size();
+    return std::min(static_cast <double> (correct) / database::init_map().size(), 1.0);
 }
 
 signed main(int argc, char *argv[]) {

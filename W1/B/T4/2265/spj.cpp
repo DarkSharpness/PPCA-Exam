@@ -34,7 +34,7 @@ bool replace(std::string &str, const std::string &from, const std::string &to) {
 
 void map_name_to_filename(std::string &name) {
 	// remove malicious characters
-	for (auto c: std::string("`!@#$%^*()+{}[]:;\"'<>,.?/\\ "))
+	for (auto c: std::string("`!@#$%^*()+{}[]:;\"'<>,.?/\\ \r\n"))
 		replace(name, std::string(1, c), "");
 	name += ".txt";
 }
