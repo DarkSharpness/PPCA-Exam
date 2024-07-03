@@ -11,13 +11,7 @@ double test(std::istream &in, std::ostream &out) {
 
         case hidden::Request_too_much:
             out << "Failure after " << hidden::trials << " trials!\n";
-            if (unsigned y; in >> y && y <= 43) {
-                out << "Mismatch character count: " << y << '\n';
-                auto ratio = (43 - y) / 43.0;
-                return std::pow(ratio, 2);
-            } else {
-                return 0;
-            }
+            return 0;
 
         case hidden::Request_success:
             if (std::size_t y; in >> y && y == hidden::checksum) {

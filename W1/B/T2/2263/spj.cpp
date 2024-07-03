@@ -33,7 +33,7 @@ double test(std::istream &output, std::ostream &message) {
         }
     }
 
-    return static_cast <double> (correct) / database::init_old().size();
+    return static_cast <double> (correct) / database::init_map().size();
 }
 
 signed main(int argc, char *argv[]) {

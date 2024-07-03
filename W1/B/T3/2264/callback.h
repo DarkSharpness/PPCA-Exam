@@ -5,14 +5,13 @@
 
 struct callback {
   private:
+    // This function will do nothing.
     static void dummy(callback &) {}
+
     using _Fn_t = decltype(dummy);
     std::byte args[48];
     _Fn_t *handle = dummy;
 
-    // Aligned to fill up a cacheline of 64 bytes
-    // This may slightly improve performance
-    // See https://www.zhihu.com/question/525624303/answer/2431131742
     std::byte _[8]; // Useless padding.
 
   public:
@@ -20,22 +19,36 @@ struct callback {
 
     void call() { return this->handle(*this); }
 
+    /**
+     * @return Returns a reference to the arguments of the callback.
+     */
     template <typename _Tp>
     _Tp &get_args() {
-        return *std::launder(reinterpret_cast<_Tp *>(this->args));
+        return *reinterpret_cast<_Tp *>(this->args);
     }
 
+    /**
+     * @return Returns a reference to the arguments of the callback.
+     */
     template <typename _Tp>
     const _Tp &get_args() const {
-        return *std::launder(reinterpret_cast<const _Tp *>(this->args));
+        return *reinterpret_cast<const _Tp *>(this->args);
     }
 
-    template <typename _Tp, typename... _Args>
-    _Tp &init_args(_Args &&...args) {
+    /**
+     * @brief Construct a new object of type _Tp in the arguments of the callback.
+     * @return Returns a reference to the newly constructed object.
+     */
+    template <typename _Tp>
+    _Tp &init_args(const _Tp &args) {
         auto *ptr = &this->get_args<_Tp>();
-        return *new (ptr) _Tp{std::forward<_Args>(args)...};
+        return *new (ptr) _Tp{ args };
     }
 
+    /**
+     * @brief Destroy the object of type _Tp in the arguments of the callback.
+     * @tparam _Tp The type of the object to destroy.
+     */
     template <typename _Tp>
     void destruct_args() {
         this->get_args<_Tp>().~_Tp();

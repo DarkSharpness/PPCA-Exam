@@ -25,7 +25,7 @@ std::string_view hack(std::size_t code) {
 }
 
 signed main() {
-    for (auto [name, code] : database::init_old()) {
+    for (auto [name, code] : database::init_map()) {
         std::cout << name << ' ';
         split(hack(code));
         std::cout << '\n';

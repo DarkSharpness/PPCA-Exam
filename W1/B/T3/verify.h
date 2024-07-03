@@ -1,25 +1,38 @@
 #pragma once
 #include "callback.h"
-#include "hidden.h"
 #include <cstring>
 
 struct buffer {
     char storage[48];
+    /** Simply copy the buffer  */
     buffer(const buffer &src) { std::strcpy(storage, src.storage); }
 };
 
-int verify(callback &request, callback &verifier) {
-    request.call();
-    verifier.init_args <buffer> (request.get_args<buffer>());
-    verifier.call();
-    return verifier.get_args<int>();
+/** Implementation of verifier. */
+void verifier(callback &f) {
+    auto args = f.get_args<buffer>();
+
+    // if (std::strcmp(args.storage, "admin") {
+    //     f.init_args(true);
+    //     return;
+    // }
+
+    f.init_args(false);
 }
 
-// A possible implementation of the verifier
-void verifier(callback &f) {
-    auto &args = f.get_args<buffer>();
-    // Count of mismatched characters
-    int mismatches = hidden::cmp(args.storage);
-    f.destruct_args<buffer>();
-    f.init_args<int>(mismatches);
+/** Construct a verifer  */
+callback get_verifier() {
+    return callback { ::verifier };
+}
+
+/* Tries to verify a request. Return true on success. */
+bool verify(callback &request, callback &verifier) {
+    // Call the request to get the arguments.
+    request.call();
+    // Initialize the verifier with the arguments.
+    verifier.init_args(request.get_args<buffer>());
+    // Call the verifier to verify the arguments.
+    verifier.call();
+    // Return the result.
+    return verifier.get_args<bool>();
 }

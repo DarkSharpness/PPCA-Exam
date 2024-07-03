@@ -18,12 +18,14 @@ struct generator {
 auto demo() -> callback {
     callback cb;
     cb.reset(generator::fn);
-    cb.init_args<generator>(5ull);
+    cb.init_args<generator>({5ull});
     return cb;
 }
 
 signed main() {
     auto cb = demo();
-    while (cb) cb.call();
+    while (cb) {
+        cb.call();
+    }
     return 0;
 }
