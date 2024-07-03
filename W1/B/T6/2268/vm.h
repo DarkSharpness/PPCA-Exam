@@ -74,7 +74,7 @@ private:
 		return *reinterpret_cast<Instruction *>(mem + pc);
 	}
 	unsigned int rand() {
-		// 1739 may have some special property
+		// TODO: notice 1739 is one special number. This line should be deleted before send to students
 		auto ret = seed;
 		seed = (unsigned long long) (seed) * (seed + 1739ull) % 998244353;
 		return ret;

@@ -1,0 +1,24 @@
+{
+	"Groups": [
+		{
+			"GroupID": 1,
+			"GroupName": "1",
+			"GroupScore": 100,
+			"TestPoints": [
+				1
+			]
+		}
+	],
+	"Details": [
+		{
+			"ID": 1,
+			"Dependency": 0,
+			"TimeLimit": 1000,
+			"MemoryLimit": 256000000,
+			"DiskLimit": 0,
+			"ValgrindTestOn": false
+		}
+	],
+	"CompileTimeLimit": 30000,
+	"SPJ": 5
+}
