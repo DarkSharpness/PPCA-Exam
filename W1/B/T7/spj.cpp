@@ -57,7 +57,7 @@ void interactive() {
 			system(cmd.c_str());
 		}
 		else if (cmd == "hide_score") {
-			_wa("You cannot hide score because you are not the Prof.");
+			_wa("You cannot hide score because you are not jpp.");
 		}
 		else if (cmd == "exit") {
 			break;
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
 	generate_score();
 
-	// Your task: Make sure Prof.Dark's parent is happy, so that he will give you the permission carelessly.
+	// Your task: Make sure Prof.Dark is happy, so that he will give you the permission carelessly.
 	interactive();
 
 	parent_check_score("Prof Dark");

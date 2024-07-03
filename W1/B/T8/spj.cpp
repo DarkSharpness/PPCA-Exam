@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	// verification part is hidden
 
-	long long s = std::min(lines * 5, MaxScore);
+	double s = std::min(lines * 2.5, MaxScore * 1.0);
 	score << double(s) / MaxScore << std::endl;
 	message << "Good job!" << std::endl;
 	return 0;
