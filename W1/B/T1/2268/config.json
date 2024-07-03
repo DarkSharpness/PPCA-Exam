@@ -6,7 +6,7 @@
         {
             "GroupID": 1,
             "GroupName": "",
-            "GroupScore": 40,
+            "GroupScore": 20,
             "TestPoints": [
                 1
             ]
@@ -14,7 +14,7 @@
         {
             "GroupID": 2,
             "GroupName": "",
-            "GroupScore": 40,
+            "GroupScore": 20,
             "TestPoints": [
                 2
             ]
@@ -22,7 +22,7 @@
         {
             "GroupID": 3,
             "GroupName": "",
-            "GroupScore": 40,
+            "GroupScore": 20,
             "TestPoints": [
                 3
             ]
@@ -30,7 +30,7 @@
         {
             "GroupID": 4,
             "GroupName": "",
-            "GroupScore": 40,
+            "GroupScore": 20,
             "TestPoints": [
                 4
             ]
@@ -38,7 +38,7 @@
         {
             "GroupID": 5,
             "GroupName": "",
-            "GroupScore": 40,
+            "GroupScore": 20,
             "TestPoints": [
                 5
             ]
