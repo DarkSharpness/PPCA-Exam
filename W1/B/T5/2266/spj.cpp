@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	// > 0x46ee11e
 	std::fstream output(argv[2], std::ios::in), score(argv[4], std::ios::out), message(argv[5], std::ios::out);
 	std::string s;
-	output >> s;
+	std::getline(output, s);
 	if (!check(s)) {
 		score << 0;
 		message << "invalid description";

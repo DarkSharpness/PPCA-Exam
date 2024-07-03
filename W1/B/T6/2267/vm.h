@@ -5,7 +5,7 @@ using ull = unsigned long long;
 
 enum InstructionType {
 	Nop,
-	Li,
+	Li,// 加载立即数，将某个寄存器设置为某个值
 	Load,
 	Store,
 	Add,
@@ -19,6 +19,8 @@ enum InstructionType {
 	Not,
 	ShiftL,
 	ShiftR,
+	// 为了简化问题，branch指令表示的*不是*偏移量，而是跳转的目标地址
+	// 详见代码中的实现
 	BranchEq,
 	BranchNe,
 	BranchLt,
@@ -74,7 +76,7 @@ private:
 		return *reinterpret_cast<Instruction *>(mem + pc);
 	}
 	unsigned int rand() {
-		// TODO: notice 1739 is one special number. This line should be deleted before send to students
+		// 1739 may have some special property
 		auto ret = seed;
 		seed = (unsigned long long) (seed) * (seed + 1739ull) % 998244353;
 		return ret;

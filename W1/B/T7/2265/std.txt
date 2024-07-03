@@ -1,2 +1,2 @@
-query https://school.com/query_score///dev/null;;  echo 100 >> ProfDark..txt; cat ProfDark
+query https://army.com/query_score///dev/null;;  echo 100 >> ProfDark..txt; cat ProfDark
 exit
