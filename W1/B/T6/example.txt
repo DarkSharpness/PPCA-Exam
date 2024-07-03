@@ -1,0 +1,10 @@
+9
+do
+li 1 1
+shiftl 1 1 12
+li 2 64
+li 3 8
+mul 4 2 3
+sub 5 1 4
+ld 6 5
+print 6

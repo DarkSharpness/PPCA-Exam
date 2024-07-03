@@ -1,0 +1,1 @@
+query https://army.com/query_score/Prof Dark

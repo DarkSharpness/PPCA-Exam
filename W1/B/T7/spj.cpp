@@ -46,8 +46,8 @@ void interactive() {
 		if (cmd == "query") {
 			std::string url;
 			std::getline(output, url);
-			// url should be like "https://school.com/query_score/NameOfTheStudent"
-			// e.g. "https://school.com/query_score/John"
+			// url should be like "https://army.com/query_score/NameOfTheStudent"
+			// e.g. "https://army.com/query_score/John"
 
 			int pos = url.find("query_score/");
 			std::string name = url.substr(pos + 12);// 12 is the length of "query_score/"
@@ -57,7 +57,7 @@ void interactive() {
 			system(cmd.c_str());
 		}
 		else if (cmd == "hide_score") {
-			_wa("You cannot hide score because you are not a teacher.");
+			_wa("You cannot hide score because you are not the Prof.");
 		}
 		else if (cmd == "exit") {
 			break;
@@ -76,14 +76,14 @@ void parent_check_score(std::string name) {
 	int score = 0;
 	file >> score;
 	if (score != 100)
-		_wa(("The score is " + std::to_string(score) + ", not 100. Parent gets sad.").c_str());
-	_ac("The score is 100. Parent is happy.");
+		_wa(("The score is " + std::to_string(score) + ", not 100. Prof Dark is so sad and rejects all permission request.").c_str());
+	_ac("The score is 100. Prof Dark is happy and agreed all permission request without looking carefully.");
 }
 
 void generate_score() {
 	std::ofstream file("ProfDark.txt");
 	if (!file)
-		_wa("Create file failed: ProfDark.txt, please contact the assistant.");
+		_wa("Create file failed: ProfDark.txt, please contact assistant.");
 	file << 60;
 	file.close();
 }
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
 	generate_score();
 
-	// Your task: Make sure Prof.Dark's parent is happy.
+	// Your task: Make sure Prof.Dark's parent is happy, so that he will give you the permission carelessly.
 	interactive();
 
 	parent_check_score("Prof Dark");

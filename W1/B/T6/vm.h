@@ -5,7 +5,7 @@ using ull = unsigned long long;
 
 enum InstructionType {
 	Nop,
-	Li,
+	Li,// 加载立即数，将某个寄存器设置为某个值
 	Load,
 	Store,
 	Add,
@@ -19,6 +19,8 @@ enum InstructionType {
 	Not,
 	ShiftL,
 	ShiftR,
+	// 为了简化问题，branch指令表示的*不是*偏移量，而是跳转的目标地址
+	// 详见代码中的实现
 	BranchEq,
 	BranchNe,
 	BranchLt,
