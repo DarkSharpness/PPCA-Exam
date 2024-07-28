@@ -30,6 +30,7 @@ struct Description {
 
 class TaskList {
 public:
+    constexpr TaskList() noexcept : first(0), finish(0), tasks(nullptr) {}
     constexpr TaskList(task_id_t first, task_id_t finish, const Task *tasks)
         noexcept : first(first), finish(finish), tasks(tasks) {}
     using iterator = const Task *;
