@@ -1,13 +1,19 @@
 #pragma once
-#include <interface.h>
+#include "interface.h"
 
 namespace oj {
 
 struct Task {
     time_t      launch_time;
     time_t      deadline;
-    time_diff_t execution_time;
+    time_t      execution_time;
     priority_t  priority;
+};
+
+template <typename _Tp>
+struct Range {
+    _Tp min;
+    _Tp max;
 };
 
 struct Description {
@@ -15,17 +21,16 @@ struct Description {
     cpu_id_t    cpu_count;
     // Number of tasks that you should generate
     task_id_t   task_count;
-    // All deadline should not exceed this value
-    // All launch time should not exceed this value
-    time_t      max_deadline_time;
-    // Sum of the execution time should not exceed this value
-    time_t      max_execution_sum;
-    // Maximal of the execution time should not exceed this value
-    time_t      max_execution_time;
-    // Sum of the priority should not exceed this value
-    priority_t  max_priority_sum;
-    // Maximal of the priority should not exceed this value
-    priority_t  max_priority_time;
+    // Range of deadline time
+    Range <time_t> deadline_time;
+    // Range of a single execution time
+    Range <time_t> execution_time_single;
+    // Range of the sum of execution time
+    Range <time_t> execution_time_sum;
+    // Range of priority of one
+    Range <priority_t> priority_single;
+    // Range of priority of sum
+    Range <priority_t> priority_sum;
 };
 
 class TaskList {
@@ -50,6 +55,15 @@ private:
     task_id_t first;
     task_id_t finish;
     const Task *tasks;
+};
+
+struct Launch {
+    cpu_id_t    cpu_cnt;
+    task_id_t   task_id;
+};
+
+struct Saving {
+    task_id_t   task_id;
 };
 
 } // namespace oj
