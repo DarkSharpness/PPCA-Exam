@@ -194,7 +194,13 @@ private:
 
 inline constexpr Description desciption {
     /* TODO: Specify the description. */ 
-    .cpu_count = oj::RuntimeManager::kCPUCount,
+    .cpu_count              = RuntimeManager::kCPUCount,
+    .task_count             = 114514,
+    .deadline_time          = { .min = 1,   .max = 1e8      },
+    .execution_time_single  = { .min = 1,   .max = 1e4      },
+    .execution_time_sum     = { .min = 2e5, .max = 1919810  },
+    .priority_single        = { .min = 1,   .max = 114514   },
+    .priority_sum           = { .min = 1,   .max = 1919810  },
 };
 
 } // namespace oj
