@@ -9,6 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include <ranges>
+#include <iostream> // For local debug only
 
 namespace oj {
 
@@ -30,13 +31,8 @@ static void panic(const std::string &message) {
     throw UserException { message };
 }
 
-struct RuntimeManager {
+struct RuntimeManager : public PublicInformation {
 public:
-    static constexpr time_t   kMaxTime  = 1e8;
-    static constexpr cpu_id_t kCPUCount = 114;
-    static constexpr time_t   kStartUp  = 2;
-    static constexpr time_t   kSaving   = 3;
-
     struct ServiceInfo {
         priority_t complete;
         priority_t total;
@@ -60,19 +56,13 @@ private:
         using WorkLoad = std::variant <TaskFree, TaskLaunch, TaskSaving>;
         WorkLoad workload;
         double time_passed; // Total time passed.
-        const std::size_t time_required;
+        const time_t deadline;
     };
 
     // Return time from when the task have done.
     auto time_policy(const TaskLaunch &launch) const -> double {
-        const auto [cpu_cnt, start] = launch;
-        const auto distance = global_clock - start;
-
-        if (distance <= kStartUp) return 0; // Within start-up time.
-
-        // Effective core count.
-        const auto effective_core = cpu_cnt == 1 ? 1 : 1 + double(cpu_cnt - 1) / 2;
-        return effective_core * (distance - kStartUp);
+        const auto distance = get_time() - launch.start;
+        return oj::time_policy(distance, launch.cpu_cnt);
     }
 
     void launch_check(const Launch &command) const {
@@ -115,8 +105,6 @@ private:
     // From launch -> saving.
     void saving_commit(const Saving &command) {
         const auto [task_id] = command;
-         // Just ignore the commit after deadline.
-        if (task_list[task_id].deadline < get_time()) return;
 
         auto &task = task_state[task_id];
         auto &workload = task.workload;
@@ -128,7 +116,7 @@ private:
         workload = TaskSaving {
             .cpu_cnt    = cpu_cnt,
             .finish     = get_time() + kSaving,
-            .time_passed = time_sum
+            .time_passed = time_sum,
         };
     }
 
@@ -146,11 +134,13 @@ private:
     }
 
     void work(const Launch &command) {
+        // std::cerr << "Commit launch " << command.task_id << ' ' << command.cpu_cnt << std::endl;
         this->launch_check(command);
         this->launch_commit(command);
     }
 
     void work(const Saving &command) {
+        // std::cerr << "Commit saving " << command.task_id << std::endl;
         this->saving_check(command);
         this->saving_commit(command);
     }
@@ -161,21 +151,17 @@ public:
         if (!std::ranges::is_sorted(this->task_list, {}, &Task::launch_time))
             panic <SystemException> ("Task list is not sorted.");
         task_state.reserve(this->task_list.size());
-        for (const auto &task : this->task_list) {
+        for (auto &task : this->task_list)
             task_state.push_back(TaskStatus {
                 .workload       = TaskFree {},
                 .time_passed    = 0,
-                .time_required  = task.execution_time
+                .deadline       = task.deadline,
             });
-        }
     }
 
     auto synchronize() -> std::vector <Task> {
         if (this->cpu_usage > kCPUCount)
             panic("CPU usage exceeds the limit.");
-
-        global_clock += 1;
-        auto retval = this->get_new_tasks();
 
         auto begin = task_saving.begin();
         auto finish = task_saving.end();
@@ -187,7 +173,8 @@ public:
                 auto &saving = get <TaskSaving> (workload);
                 if (saving.finish == this->get_time()) {
                     cpu_usage -= saving.cpu_cnt;
-                    task.time_passed += saving.time_passed;
+                    if (this->get_time() <= task.deadline)
+                        task.time_passed += saving.time_passed;
                     workload = TaskFree {};
                     std::swap(*begin, *--finish);
                 } else {
@@ -200,10 +187,12 @@ public:
 
         task_saving.resize(finish - task_saving.begin());
 
-        return retval;
+        global_clock += 1;
+        return this->get_new_tasks();
     }
 
     void work(std::vector <Policy> p) {
+        // if (!p.empty()) std::cerr << "Work at " << this->get_time() << std::endl;
         for (const auto &policy : p) {
             std::visit([this](const auto &command) { this->work(command); }, policy);
         }
@@ -215,10 +204,13 @@ public:
 
     auto get_service_info() const -> ServiceInfo {
         ServiceInfo result { .complete = 0, .total = 0 };
-        for (auto &task : task_state) {
-            if (time_t(task.time_passed) >= task.time_required)
-                result.complete += task.time_required;
-            result.total += task.time_required;
+        for (task_id_t id = 0; id < global_tasks; ++id) {
+            auto &state   = task_state[id];
+            auto &task    = task_list[id];
+            if (time_t(state.time_passed) >= task.execution_time) {
+                result.complete += task.priority;
+            }
+            result.total += task.priority;
         }
         return result;
     }
@@ -236,7 +228,7 @@ private:
 inline constexpr Description sample_description {
     .cpu_count              = RuntimeManager::kCPUCount,
     .task_count             = 114514,
-    .deadline_time          = { .min = 1,   .max = int(1e8) },
+    .deadline_time          = { .min = 1,   .max = int(1e6) },
     .execution_time_single  = { .min = 1,   .max = int(1e4) },
     .execution_time_sum     = { .min = int(2e5), .max = 1919810  },
     .priority_single        = { .min = 1,   .max = 114514   },

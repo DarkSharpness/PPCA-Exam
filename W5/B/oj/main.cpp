@@ -102,7 +102,7 @@ static auto handle_exception(const oj::OJException &e) -> JudgeResult {
 static auto judge(const oj::Description &desc) -> std::pair <JudgeResult, ServiceInfo> {
     std::vector <oj::Task> tasks;
     try {
-        generate_work(desc);
+        tasks = generate_work(desc);
     } catch (const oj::OJException &e) {
         return { handle_exception <JudgeResult::GenerateFailed> (e), {} };
     }
@@ -123,7 +123,12 @@ signed main() {
                 std::cout << "Complete rate: "
                     << std::setprecision(6)
                     << std::fixed
-                    << double(info.complete) / info.total
+                    << 100 * double(info.complete) / info.total
+                    << "% ("
+                    << info.complete
+                    << "/"
+                    << info.total
+                    << ")"
                     << std::endl;
                 break;
             case JudgeResult::SystemError:
