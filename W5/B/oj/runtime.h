@@ -7,8 +7,28 @@
 #include <optional>
 #include <stdexcept>
 #include <cmath>
+#include <algorithm>
+#include <ranges>
 
 namespace oj {
+
+struct OJException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+struct UserException : public OJException {
+    using OJException::OJException;
+};
+
+struct SystemException : public OJException {
+    using OJException::OJException;
+};
+
+template <typename _Error = UserException>
+[[noreturn]]
+static void panic(const std::string &message) {
+    throw UserException { message };
+}
 
 struct RuntimeManager {
 public:
@@ -16,6 +36,12 @@ public:
     static constexpr cpu_id_t kCPUCount = 114;
     static constexpr time_t   kStartUp  = 2;
     static constexpr time_t   kSaving   = 3;
+
+    struct ServiceInfo {
+        priority_t complete;
+        priority_t total;
+    };
+
 private:
     struct TaskFree {
         /* Nothing. */
@@ -34,12 +60,8 @@ private:
         using WorkLoad = std::variant <TaskFree, TaskLaunch, TaskSaving>;
         WorkLoad workload;
         double time_passed; // Total time passed.
-        const double time_required;
+        const std::size_t time_required;
     };
-
-    void panic(std::string msg) const {
-        throw std::runtime_error(std::move(msg));
-    }
 
     // Return time from when the task have done.
     auto time_policy(const TaskLaunch &launch) const -> double {
@@ -53,45 +75,49 @@ private:
         return effective_core * (distance - kStartUp);
     }
 
-    void work_check(const Launch &command) const {
+    void launch_check(const Launch &command) const {
         const auto [cpu_cnt, task_id] = command;
         if (cpu_cnt == 0)
-            return panic("CPU count should not be zero.");
-        if (cpu_cnt > (kCPUCount - free_cpu))
-            return panic("CPU count exceeds the limit.");
+            panic("CPU count should not be zero.");
+        if (cpu_cnt > kCPUCount)
+            panic("CPU count exceeds the kMaxCPU limit.");
         if (task_id >= global_tasks)
-            return panic("Task ID out of range.");
+            panic("Task ID out of range.");
 
         const auto &workload = task_state[task_id].workload;
         if (!holds_alternative <TaskFree> (workload))
-            return panic("Task is not free.");
+            panic("Task is not free.");
     }
 
     // From free -> launch.
-    void work_commit(const Launch &command) {
+    void launch_commit(const Launch &command) {
         const auto [cpu_cnt, task_id] = command;
         auto &workload = task_state[task_id].workload;
 
-        free_cpu -= cpu_cnt;
+        this->cpu_usage += cpu_cnt;
+
         workload = TaskLaunch {
             .cpu_cnt    = cpu_cnt,
-            .start      = global_clock,
+            .start      = get_time(),
         };
     }
 
-    void work_check(const Saving &command) const {
+    void saving_check(const Saving &command) const {
         const auto [task_id] = command;
         if (task_id >= global_tasks)
-            return panic("Task ID out of range.");
+            panic("Task ID out of range.");
 
         const auto &workload = task_state[task_id].workload;
         if (!holds_alternative <TaskLaunch> (workload))
-            return panic("Task is not launched.");
+            panic("Task is not launched.");
     }
 
     // From launch -> saving.
-    void work_commit(const Saving &command) {
+    void saving_commit(const Saving &command) {
         const auto [task_id] = command;
+         // Just ignore the commit after deadline.
+        if (task_list[task_id].deadline < get_time()) return;
+
         auto &task = task_state[task_id];
         auto &workload = task.workload;
         const auto &launch = get <TaskLaunch> (workload);
@@ -101,7 +127,7 @@ private:
         auto [cpu_cnt, start] = launch;
         workload = TaskSaving {
             .cpu_cnt    = cpu_cnt,
-            .finish     = global_clock + kSaving,
+            .finish     = get_time() + kSaving,
             .time_passed = time_sum
         };
     }
@@ -112,27 +138,42 @@ private:
         const auto start = which;
 
         while (which < task_list.size()
-        && task_list[which].launch_time == global_clock)
+        && task_list[which].launch_time == get_time())
             which += 1;
 
         auto begin = task_list.begin();
         return std::vector <Task> (begin + start, begin + which);
     }
 
+    void work(const Launch &command) {
+        this->launch_check(command);
+        this->launch_commit(command);
+    }
+
+    void work(const Saving &command) {
+        this->saving_check(command);
+        this->saving_commit(command);
+    }
+
 public:
     explicit RuntimeManager(std::vector <Task> task_list)
-        : global_clock(-1), global_tasks(0), free_cpu(kCPUCount), task_list(std::move(task_list)) {
+        : global_clock(-1), global_tasks(0), cpu_usage(0), task_list(std::move(task_list)) {
+        if (!std::ranges::is_sorted(this->task_list, {}, &Task::launch_time))
+            panic <SystemException> ("Task list is not sorted.");
         task_state.reserve(this->task_list.size());
         for (const auto &task : this->task_list) {
             task_state.push_back(TaskStatus {
                 .workload       = TaskFree {},
                 .time_passed    = 0,
-                .time_required  = double(task.execution_time)
+                .time_required  = task.execution_time
             });
         }
     }
 
     auto synchronize() -> std::vector <Task> {
+        if (this->cpu_usage > kCPUCount)
+            panic("CPU usage exceeds the limit.");
+
         global_clock += 1;
         auto retval = this->get_new_tasks();
 
@@ -144,9 +185,9 @@ public:
             auto &workload = task.workload;
             if (holds_alternative <TaskSaving> (workload)) {
                 auto &saving = get <TaskSaving> (workload);
-                if (saving.finish == global_clock) {
-                    free_cpu += saving.cpu_cnt;
-                    task.time_passed += saving.time_passed; 
+                if (saving.finish == this->get_time()) {
+                    cpu_usage -= saving.cpu_cnt;
+                    task.time_passed += saving.time_passed;
                     workload = TaskFree {};
                     std::swap(*begin, *--finish);
                 } else {
@@ -162,16 +203,6 @@ public:
         return retval;
     }
 
-    void work(const Launch &command) {
-        this->work_check(command);
-        this->work_commit(command);
-    }
-
-    void work(const Saving &command) {
-        this->work_check(command);
-        this->work_commit(command);
-    }
-
     void work(std::vector <Policy> p) {
         for (const auto &policy : p) {
             std::visit([this](const auto &command) { this->work(command); }, policy);
@@ -182,23 +213,32 @@ public:
         return global_clock;
     }
 
+    auto get_service_info() const -> ServiceInfo {
+        ServiceInfo result { .complete = 0, .total = 0 };
+        for (auto &task : task_state) {
+            if (time_t(task.time_passed) >= task.time_required)
+                result.complete += task.time_required;
+            result.total += task.time_required;
+        }
+        return result;
+    }
+
 private:
     time_t      global_clock;   // A global clock to record the current time
     task_id_t   global_tasks;   // A global task ID counter.
-    cpu_id_t    free_cpu;      // Free CPU count.
+    cpu_id_t    cpu_usage;      // The current CPU usage
 
     const std::vector <Task> task_list;         // A list of tasks
     std::vector <TaskStatus> task_state;        // A list of task status
-    std::vector <TaskStatus *> task_saving;    // A list of working tasks
+    std::vector <TaskStatus *> task_saving;     // A list of working tasks
 };
 
-inline constexpr Description desciption {
-    /* TODO: Specify the description. */ 
+inline constexpr Description sample_description {
     .cpu_count              = RuntimeManager::kCPUCount,
     .task_count             = 114514,
-    .deadline_time          = { .min = 1,   .max = 1e8      },
-    .execution_time_single  = { .min = 1,   .max = 1e4      },
-    .execution_time_sum     = { .min = 2e5, .max = 1919810  },
+    .deadline_time          = { .min = 1,   .max = int(1e8) },
+    .execution_time_single  = { .min = 1,   .max = int(1e4) },
+    .execution_time_sum     = { .min = int(2e5), .max = 1919810  },
     .priority_single        = { .min = 1,   .max = 114514   },
     .priority_sum           = { .min = 1,   .max = 1919810  },
 };
