@@ -11,12 +11,12 @@
 namespace oj {
 
 struct RuntimeManager {
-private:
+public:
     static constexpr time_t   kMaxTime  = 1e8;
     static constexpr cpu_id_t kCPUCount = 114;
     static constexpr time_t   kStartUp  = 2;
     static constexpr time_t   kSaving   = 3;
-
+private:
     struct TaskFree {
         /* Nothing. */
     };
@@ -36,14 +36,6 @@ private:
         double time_passed; // Total time passed.
         const double time_required;
     };
-
-    time_t      global_clock;   // A global clock to record the current time
-    task_id_t   global_tasks;   // A global task ID counter.
-    cpu_id_t    free_cpu;      // Free CPU count.
-
-    const std::vector <Task> task_list;         // A list of tasks
-    std::vector <TaskStatus> task_state;        // A list of task status
-    std::vector <TaskStatus *> task_saving;    // A list of working tasks
 
     void panic(std::string msg) const {
         throw std::runtime_error(std::move(msg));
@@ -114,10 +106,36 @@ private:
         };
     }
 
+    /* Counting all the tasks in this cycle. */
+    auto get_new_tasks() -> std::vector <Task> {
+        auto &which = this->global_tasks;
+        const auto start = which;
+
+        while (which < task_list.size()
+        && task_list[which].launch_time == global_clock)
+            which += 1;
+
+        auto begin = task_list.begin();
+        return std::vector <Task> (begin + start, begin + which);
+    }
+
 public:
-    void synchronize(task_id_t new_task_cnt) {
+    explicit RuntimeManager(std::vector <Task> task_list)
+        : global_clock(-1), global_tasks(0), free_cpu(kCPUCount), task_list(std::move(task_list)) {
+        task_state.reserve(this->task_list.size());
+        for (const auto &task : this->task_list) {
+            task_state.push_back(TaskStatus {
+                .workload       = TaskFree {},
+                .time_passed    = 0,
+                .time_required  = double(task.execution_time)
+            });
+        }
+    }
+
+    auto synchronize() -> std::vector <Task> {
         global_clock += 1;
-        global_tasks += new_task_cnt;
+        auto retval = this->get_new_tasks();
+
         auto begin = task_saving.begin();
         auto finish = task_saving.end();
 
@@ -140,6 +158,8 @@ public:
         }
 
         task_saving.resize(finish - task_saving.begin());
+
+        return retval;
     }
 
     void work(const Launch &command) {
@@ -157,6 +177,24 @@ public:
             std::visit([this](const auto &command) { this->work(command); }, policy);
         }
     }
+
+    auto get_time() const -> time_t {
+        return global_clock;
+    }
+
+private:
+    time_t      global_clock;   // A global clock to record the current time
+    task_id_t   global_tasks;   // A global task ID counter.
+    cpu_id_t    free_cpu;      // Free CPU count.
+
+    const std::vector <Task> task_list;         // A list of tasks
+    std::vector <TaskStatus> task_state;        // A list of task status
+    std::vector <TaskStatus *> task_saving;    // A list of working tasks
+};
+
+inline constexpr Description desciption {
+    /* TODO: Specify the description. */ 
+    .cpu_count = oj::RuntimeManager::kCPUCount,
 };
 
 } // namespace oj

@@ -33,30 +33,6 @@ struct Description {
     Range <priority_t> priority_sum;
 };
 
-class TaskList {
-public:
-    constexpr TaskList() noexcept : first(0), finish(0), tasks(nullptr) {}
-    constexpr TaskList(task_id_t first, task_id_t finish, const Task *tasks)
-        noexcept : first(first), finish(finish), tasks(tasks) {}
-    using iterator = const Task *;
-    auto begin() const -> iterator {
-        return this->tasks + this->first;
-    }
-    auto end() const -> iterator {
-        return this->tasks + this->finish;
-    }
-    auto size() const -> task_id_t {
-        return this->finish - this->first;
-    }
-    auto get_first_id() const -> task_id_t {
-        return this->first;
-    }
-private:
-    task_id_t first;
-    task_id_t finish;
-    const Task *tasks;
-};
-
 struct Launch {
     cpu_id_t    cpu_cnt;
     task_id_t   task_id;
