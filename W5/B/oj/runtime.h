@@ -145,24 +145,8 @@ private:
         this->saving_commit(command);
     }
 
-public:
-    explicit RuntimeManager(std::vector <Task> task_list)
-        : global_clock(-1), global_tasks(0), cpu_usage(0), task_list(std::move(task_list)) {
-        if (!std::ranges::is_sorted(this->task_list, {}, &Task::launch_time))
-            panic <SystemException> ("Task list is not sorted.");
-        task_state.reserve(this->task_list.size());
-        for (auto &task : this->task_list)
-            task_state.push_back(TaskStatus {
-                .workload       = TaskFree {},
-                .time_passed    = 0,
-                .deadline       = task.deadline,
-            });
-    }
-
-    auto synchronize() -> std::vector <Task> {
-        if (this->cpu_usage > kCPUCount)
-            panic("CPU usage exceeds the limit.");
-
+    /* Remove those outdated saving file within.  */
+    void complete_this_cycle() {
         auto begin = task_saving.begin();
         auto finish = task_saving.end();
 
@@ -186,6 +170,27 @@ public:
         }
 
         task_saving.resize(finish - task_saving.begin());
+    }
+
+public:
+    explicit RuntimeManager(std::vector <Task> task_list)
+        : global_clock(-1), global_tasks(0), cpu_usage(0), task_list(std::move(task_list)) {
+        if (!std::ranges::is_sorted(this->task_list, {}, &Task::launch_time))
+            panic <SystemException> ("Task list is not sorted.");
+        task_state.reserve(this->task_list.size());
+        for (auto &task : this->task_list)
+            task_state.push_back(TaskStatus {
+                .workload       = TaskFree {},
+                .time_passed    = 0,
+                .deadline       = task.deadline,
+            });
+    }
+
+    auto synchronize() -> std::vector <Task> {
+        this->complete_this_cycle();
+
+        if (this->cpu_usage > kCPUCount)
+            panic("CPU usage exceeds the limit.");
 
         global_clock += 1;
         return this->get_new_tasks();
