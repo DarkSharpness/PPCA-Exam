@@ -3,8 +3,8 @@
 #include "definition.h"
 
 // These 2 are your implementations.
-#include "_generate.h"
-#include "_schedule.h"
+#include "_generator.h"
+#include "_scheduler.h"
 
 // This is only for the judge.
 #include "runtime.h"

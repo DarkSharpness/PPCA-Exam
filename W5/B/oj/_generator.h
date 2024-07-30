@@ -39,6 +39,7 @@ auto generate_tasks(const Description &desc) -> std::vector <Task> {
             task.deadline       += offset;
         }
         task.execution_time += gen() % kMagic;
+        task.priority       += gen() % 3;
     }
 
     return tasks;
