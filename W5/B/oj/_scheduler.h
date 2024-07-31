@@ -43,27 +43,49 @@ struct StateManager {
         return retval;
     }
 
+
     auto release(time_t time) -> std::vector <Policy> {
+        this->release_saved(time);
+
         auto it = finish_tasks.find(time);
-        if (it != finish_tasks.end()) {
-            std::vector <Policy> ret;
-            ret.reserve(it->second.size());
-            for (auto [cpu_cnt, task_id] : it->second) {
-                ret.push_back(Saving { .task_id = task_id });
-                cpu_usage -= cpu_cnt;
-            }
-            finish_tasks.erase(it);
-            return ret;
-        } else {
-            return {};
+        if (it == finish_tasks.end()) return {};
+
+        std::vector <Policy> ret;
+        ret.reserve(it->second.size());
+
+        auto &saved = saved_tasks[time + PublicInformation::kSaving];
+        for (auto [cpu_cnt, task_id] : it->second) {
+            ret.push_back(Saving { .task_id = task_id });
+            saved += cpu_cnt;
         }
+
+        finish_tasks.erase(it);
+        return ret;
+    }
+
+    void reset() {
+        cpu_usage = 0;
+        finish_tasks.clear();
+        saved_tasks.clear();
+    }
+
+private:
+    void release_saved(time_t time) {
+        auto it = saved_tasks.find(time);
+        if (it == saved_tasks.end()) return;
+        this->cpu_usage -= it->second;
+        saved_tasks.erase(it);
     }
 
     cpu_id_t cpu_usage;
-private:
     std::unordered_map <time_t, std::vector<Launch>> finish_tasks;
+    std::unordered_map <time_t, cpu_id_t> saved_tasks;
 };
 
+
+static StateManager manager;
+static std::vector <Task *> cached_list;
+static std::size_t task_count = 0;
 
 /**
  * @brief Scheduler side.
@@ -74,11 +96,7 @@ private:
  * @param list A list of tasks that need to be scheduled.
  * @param desc Description of the tasks. Same as the one used in generate_tasks.
  */
-auto schedule_tasks(time_t time, std::vector <Task> list, const Description &) -> std::vector<Policy> {
-    static StateManager manager {};
-    static std::vector <Task *> cached_list {};
-    static std::size_t task_count = 0;
-
+auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy> {
     cached_list.resize(list.size());
     for (std::size_t i = 0; i < list.size(); i++)
         cached_list[i] = &list[i];
@@ -98,6 +116,12 @@ auto schedule_tasks(time_t time, std::vector <Task> list, const Description &) -
 
     task_count += list.size();
     return ret;
+}
+
+auto scheudle_reset(const Description &) -> void {
+    manager.reset();
+    cached_list.clear();
+    task_count = 0;
 }
 
 } // namespace oj

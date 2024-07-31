@@ -5,6 +5,14 @@
 
 namespace oj {
 
+static auto min_time_required(time_t target) -> time_t {
+    std::size_t i = 0;
+    while (time_policy(i, PublicInformation::kCPUCount)
+        < target)
+        ++i;
+    return i * 1.1 + 1;
+}
+
 /**
  * @brief Generator side.
  * You need to generate a list of tasks based on the description.
@@ -14,19 +22,23 @@ namespace oj {
  * @return A list of tasks, which must satisfy the description.
  */
 auto generate_tasks(const Description &desc) -> std::vector <Task> {
-    const auto min_duration = 1 + desc.execution_time_sum.min / desc.task_count;
+    const auto min_duration = 1 +
+        std::max(
+            desc.execution_time_sum.min / desc.task_count,
+            desc.execution_time_single.min
+        );
     const auto min_priority = 1 + desc.priority_sum.min / desc.task_count;
 
     const Task template_task = {
         .launch_time    = 1,
-        .deadline       = 2 + 2 * min_duration / desc.cpu_count,
+        .deadline       = 1 + min_time_required(min_duration),
         .execution_time = 1 + min_duration,
         .priority       = 1 + min_priority
     };
 
-    auto tasks = std::vector <Task>(desc.task_count, template_task);
+    std::vector <Task> tasks { desc.task_count, template_task };
 
-    std::mt19937 gen(1919810);
+    std::mt19937 gen { 1919810 };
     constexpr std::size_t kMagic = 8;
 
     for (auto &task : tasks) {
