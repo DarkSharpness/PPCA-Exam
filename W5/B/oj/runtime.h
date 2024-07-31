@@ -9,7 +9,11 @@
 #include <cmath>
 #include <algorithm>
 #include <ranges>
-#include <iostream> // For local debug only
+#include <bit>
+#include <span>
+#include <fstream>
+#include <iostream>     // For local debug only
+#include <filesystem>   // For local debug only
 
 namespace oj {
 
@@ -31,13 +35,12 @@ static void panic(const std::string &message) {
     throw UserException { message };
 }
 
-struct RuntimeManager : public PublicInformation {
-public:
-    struct ServiceInfo {
-        priority_t complete;
-        priority_t total;
-    };
+struct ServiceInfo {
+    priority_t complete;
+    priority_t total;
+};
 
+struct RuntimeManager : public PublicInformation {
 private:
     struct TaskFree {
         /* Nothing. */
@@ -73,7 +76,6 @@ private:
             panic("CPU count exceeds the kMaxCPU limit.");
         if (task_id >= global_tasks)
             panic("Task ID out of range.");
-
         const auto &workload = task_state[task_id].workload;
         if (!holds_alternative <TaskFree> (workload))
             panic("Task is not free.");
@@ -230,14 +232,69 @@ private:
     std::vector <TaskStatus *> task_saving;     // A list of working tasks
 };
 
-inline constexpr Description sample_description {
-    .cpu_count              = RuntimeManager::kCPUCount,
-    .task_count             = 114514,
-    .deadline_time          = { .min = 1,   .max = int(1e6) },
-    .execution_time_single  = { .min = 1,   .max = int(1e4) },
-    .execution_time_sum     = { .min = int(2e5), .max = 1919810  },
-    .priority_single        = { .min = 1,   .max = 114514   },
-    .priority_sum           = { .min = 1,   .max = 1919810  },
+static_assert(std::is_standard_layout_v <Task>);
+static_assert(std::is_trivial_v <Task>);
+
+struct Header {
+    std::size_t task_count;
+    Description description;
+    ServiceInfo service_info;
+    const std::size_t magic = kMagic;
+    // 'D' 'A' 'R' 'K'
+    // 'W' 'H' 'A' 'T'
+    static constexpr std::size_t kMagic =
+        std::size_t(0x4B524144) << 32 | std::size_t(0x54414857);
 };
+
+struct OJTask {
+    std::size_t description_count;
+    const std::size_t magic = kMagic;
+    // 'D' 'A' 'R' 'K'
+    // 'W' 'H' 'A' 'T'
+    static constexpr std::size_t kMagic =
+        std::size_t(0x4B524144) << 32 | std::size_t(0x54414857);
+};
+
+inline void serialize(std::ostream &os, const OJTask &task) {
+    os.write(std::bit_cast <const char *> (&task), sizeof(OJTask));
+    if (!os.good())
+        panic <SystemException> ("File write failed.");
+}
+
+inline void serialize(
+    std::ostream &os,
+    std::span <const Task> vec,
+    Description description,
+    ServiceInfo service_info) {
+    const auto header = Header {
+        .task_count   = vec.size(),
+        .description  = description,
+        .service_info = service_info,
+    };
+    os.write(std::bit_cast <const char *> (&header), sizeof(Header));
+
+    const auto size = vec.size() * sizeof(Task);
+    os.write(std::bit_cast <const char *> (vec.data()), size);
+
+    if (!os.good())
+        panic <SystemException> ("File write failed.");
+}
+
+inline auto deserialize(std::istream &is) -> std::vector <Task> {
+    Header header;
+
+    is.read(std::bit_cast <char *> (&header), sizeof(Header));
+    if (header.magic != header.kMagic)
+        panic <UserException> ("Magic number mismatch.");
+
+    std::vector <Task> vec(header.task_count);
+    const auto size = vec.size() * sizeof(Task);
+    is.read(std::bit_cast <char *> (vec.data()), size);
+
+    if (!is.good())
+        panic <SystemException> ("File is corrupted.");
+
+    return vec;
+}
 
 } // namespace oj

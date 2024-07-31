@@ -70,4 +70,46 @@ inline auto time_policy(time_t duration, cpu_id_t cpu_cnt) -> double {
     return effective_core * effective_time;
 }
 
+/* The description of each oj sub-task. */
+
+inline constexpr Description senpai = {
+    .cpu_count              = PublicInformation::kCPUCount,
+    .task_count             = 114514,
+    .deadline_time          = { .min = 1,   .max = int(1e6) },
+    .execution_time_single  = { .min = 1,   .max = int(1e4) },
+    .execution_time_sum     = { .min = int(2e5), .max = 1919810  },
+    .priority_single        = { .min = 1,   .max = 114514   },
+    .priority_sum           = { .min = 1,   .max = 1919810  },
+};
+
+constexpr Description small = {
+    .cpu_count              = PublicInformation::kCPUCount,
+    .task_count             = 1000,
+    .deadline_time          = { .min = 1, .max = 900        }, 
+    .execution_time_single  = { .min = 1, .max = 100        },
+    .execution_time_sum     = { .min = 1, .max = 10000      },
+    .priority_single        = { .min = 1, .max = 20         },
+    .priority_sum           = { .min = 1, .max = 10000      },
+};
+
+constexpr Description middle = {
+    .cpu_count              = PublicInformation::kCPUCount,
+    .task_count             = 100000,
+    .deadline_time          = { .min = 1,   .max = 300000   },
+    .execution_time_single  = { .min = 100, .max = 10000    },
+    .execution_time_sum     = { .min = 50000000, .max = 99999999 },
+    .priority_single        = { .min = 1,   .max = 1000     },
+    .priority_sum           = { .min = 1,   .max = 10000000 },
+};
+
+constexpr Description huge = {
+    .cpu_count              = PublicInformation::kCPUCount,
+    .task_count             = 100000,
+    .deadline_time          = { .min = 1,   .max = 3000000  },
+    .execution_time_single  = { .min = 999, .max = 100000   },
+    .execution_time_sum     = { .min = 1,   .max = 999999999 },
+    .priority_single        = { .min = 1,   .max = 1000     },
+    .priority_sum           = { .min = 1,   .max = 10000000 },
+};
+
 } // namespace oj

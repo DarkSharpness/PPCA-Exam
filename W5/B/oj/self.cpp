@@ -64,16 +64,15 @@ static auto generate_work(const oj::Description &desc) -> std::vector <oj::Task>
     return tasks;
 }
 
-using ServiceInfo = oj::RuntimeManager::ServiceInfo;
-
-static auto schedule_work(const oj::Description &desc, std::vector <oj::Task> tasks) -> ServiceInfo {
+static auto schedule_work(const oj::Description &desc, std::vector <oj::Task> tasks)
+-> oj::ServiceInfo {
     oj::RuntimeManager manager { std::move(tasks) };
-
+    oj::scheudle_reset(desc);
     for (std::size_t i = 0; i <= desc.deadline_time.max; ++i) {
         auto new_tasks = manager.synchronize();
         if (i != manager.get_time())
             panic <oj::SystemException> ("Time is not synchronized");
-        manager.work(oj::schedule_tasks(i, std::move(new_tasks), desc));
+        manager.work(oj::schedule_tasks(i, std::move(new_tasks)));
     }
 
     manager.synchronize();
@@ -82,75 +81,69 @@ static auto schedule_work(const oj::Description &desc, std::vector <oj::Task> ta
 }
 
 enum class JudgeResult {
-    Normal,
-    SystemError,
     GenerateFailed,
     ScheduleFailed,
 };
 
 template <JudgeResult _Default_Result>
-static auto handle_exception(const oj::OJException &e) -> JudgeResult {
+[[noreturn]]
+static void handle_exception(const oj::OJException &e) {
     if (dynamic_cast <const oj::UserException *> (&e)) {
         if constexpr (_Default_Result == JudgeResult::GenerateFailed)
             std::cerr << "Generate failed: " << e.what() << std::endl;
-        else if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
+        if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
             std::cerr << "Schedule failed: " << e.what() << std::endl;
-        return _Default_Result;
     } else { // Unknown system error.
         std::cerr << "System Error: " << e.what() << std::endl;
-        return JudgeResult::SystemError;
     }
+    std::exit(EXIT_FAILURE);
 }
 
-static auto judge(const oj::Description &desc) -> std::pair <JudgeResult, ServiceInfo> {
+static auto judge(const oj::Description &desc) {
+    using enum JudgeResult;
     std::vector <oj::Task> tasks;
+
     try {
         tasks = generate_work(desc);
     } catch (const oj::OJException &e) {
-        return { handle_exception <JudgeResult::GenerateFailed> (e), {} };
+        handle_exception <GenerateFailed> (e);
     }
 
     try {
-        auto info = schedule_work(desc, std::move(tasks));
-        return { JudgeResult::Normal, info };
+        auto info = schedule_work(desc, tasks);
+
+        std::cerr << "Complete rate: "
+            << std::setprecision(2)
+            << std::fixed
+            << 100 * double(info.complete) / info.total
+            << "% ("
+            << info.complete
+            << "/"
+            << info.total
+            << ")"
+            << std::endl;
+
+        oj::serialize(std::cout, tasks, desc, info);
     } catch (const oj::OJException &e) {
-        return { handle_exception <JudgeResult::ScheduleFailed> (e), {} };
+        handle_exception <ScheduleFailed> (e);
     }
 }
 
 signed main() {
-    double complete_rate = 0.5;
     try {
-        auto [result, info] = judge(oj::sample_description);
-        switch (result) {
-            case JudgeResult::Normal:
-                complete_rate = double(info.complete) / info.total;
-                std::cerr << "Complete rate: "
-                    << std::setprecision(2)
-                    << std::fixed
-                    << 100 * complete_rate
-                    << "% ("
-                    << info.complete
-                    << "/"
-                    << info.total
-                    << ")"
-                    << std::endl;
-                break;
-            case JudgeResult::SystemError:
-                break;
-            case JudgeResult::GenerateFailed:
-                complete_rate = 1;
-                break;
-            case JudgeResult::ScheduleFailed:
-                complete_rate = 0;
-                break;
-            default: break;
-        }
+        using namespace oj;
+        constexpr Description array[] = {
+            small,
+            middle,
+            senpai,
+            huge,
+        };
+        serialize(std::cout, { .description_count = std::size(array) });
+        for (const auto &desc : array) judge(desc);
     } catch (const std::exception &e) {
         std::cerr << "System Error: Unexpected std::exception(): " << e.what() << std::endl;
     } catch (...) {
         std::cerr << "System Error: An unknown error occurred!" << std::endl;
     }
-    std::cout << complete_rate << std::endl;
     return 0;
 }

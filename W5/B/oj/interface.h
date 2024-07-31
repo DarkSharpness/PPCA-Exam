@@ -33,9 +33,15 @@ auto generate_tasks(const Description &desc) -> std::vector <Task>;
  * Your task is to attempt to improve the SLO rate.
  * That is, you need to optimize the scheduling of tasks.
  * @param time Current time.
- * @param list A list of tasks that need to be scheduled.
+ * @param list A list of tasks that need to be scheduled at the current time.
+ */
+auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy>;
+
+/**
+ * @brief Scheduler side.
+ * Initialize the scheduler function.
  * @param desc Description of the tasks. Same as the one used in generate_tasks.
  */
-auto schedule_tasks(time_t time, std::vector <Task> list, const Description &desc) -> std::vector<Policy>;
+auto scheudle_reset(const Description &desc) -> void;
 
 } // namespace oj
