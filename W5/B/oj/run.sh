@@ -1,4 +1,4 @@
-WARNING_FLAGS="-Wall -Wextra"
+sh compile.sh client
+sh compile.sh server
 
-g++ -std=c++20 main.cpp -O2 -o main $WARNING_FLAGS
-./main
+./client | ./server 
