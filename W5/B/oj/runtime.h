@@ -266,33 +266,33 @@ private:
     std::unordered_set <TaskStatus *> task_saving; // A list of free tasks
 };
 
-static_assert(std::is_standard_layout_v <Task>);
-static_assert(std::is_trivial_v <Task>);
-
 struct Header {
     std::size_t task_count;
     Description description;
     ServiceInfo service_info;
-    const std::size_t magic = kMagic;
+    const bool        error_occur   = false;
+    const std::size_t error_length  = 0;
+    const std::size_t magic         = kMagic;
     // 'D' 'A' 'R' 'K'
     // 'W' 'H' 'A' 'T'
     static constexpr std::size_t kMagic =
         std::size_t(0x4B524144) << 32 | std::size_t(0x54414857);
 };
 
-struct OJTask {
-    std::size_t description_count;
-    const std::size_t magic = kMagic;
-    // 'D' 'A' 'R' 'K'
-    // 'W' 'H' 'A' 'T'
-    static constexpr std::size_t kMagic =
-        std::size_t(0x4B524144) << 32 | std::size_t(0x54414857);
-};
+inline void serialize_error(std::ostream &os, std::string msg) {
+    const auto header = Header {
+        .task_count   = 0,
+        .description  = {},
+        .service_info = {},
+        .error_occur  = true,
+        .error_length = msg.size(),
+    };
 
-inline void serialize(std::ostream &os, const OJTask &task) {
-    os.write(std::bit_cast <const char *> (&task), sizeof(OJTask));
+    os.write(std::bit_cast <const char *> (&header), sizeof(Header));
+    os.write(msg.data(), msg.size());
+
     if (!os.good())
-        panic <SystemException> ("File write failed.");
+        std::exit(EXIT_FAILURE);
 }
 
 inline void serialize(
@@ -314,30 +314,29 @@ inline void serialize(
         panic <SystemException> ("File write failed.");
 }
 
-inline auto deserialize_main(std::istream &is) -> std::size_t {
-    OJTask task;
-
-    is.read(std::bit_cast <char *> (&task), sizeof(OJTask));
-    if (task.magic != task.kMagic)
-        panic <UserException> ("Magic number mismatch.");
-
-    return task.description_count;
-}
-
-
 inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Task>> {
     Header header;
 
     is.read(std::bit_cast <char *> (&header), sizeof(Header));
-    if (header.magic != header.kMagic)
-        panic <UserException> ("Magic number mismatch.");
+
+    if (header.magic != header.kMagic) {
+        serialize_error(std::cout, "System Error: Not handled in the spj!");
+        std::exit(EXIT_SUCCESS);
+    }
+
+    if (header.error_occur) {
+        serialize_error(std::cout, "System Error: Not handled in the spj!");
+        std::exit(EXIT_SUCCESS);
+    }
 
     std::vector <Task> vec(header.task_count);
     const auto size = vec.size() * sizeof(Task);
     is.read(std::bit_cast <char *> (vec.data()), size);
 
-    if (!is.good())
-        panic <SystemException> ("File is corrupted.");
+    if (!is.good()) {
+        serialize_error(std::cout, "System Error: Not handled in the spj!");
+        std::exit(EXIT_SUCCESS);
+    }
 
     return { std::move(header), std::move(vec) };
 }
@@ -414,15 +413,25 @@ enum class JudgeResult {
 template <JudgeResult _Default_Result>
 [[noreturn]]
 static void handle_exception(const OJException &e) {
+    std::string error_message;
     if (dynamic_cast <const UserException *> (&e)) {
-        if constexpr (_Default_Result == JudgeResult::GenerateFailed)
-            std::cerr << "Generate failed: " << e.what() << std::endl;
-        if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
-            std::cerr << "Schedule failed: " << e.what() << std::endl;
+        if constexpr (_Default_Result == JudgeResult::GenerateFailed) {
+            error_message = "Generate failed: ";
+            error_message += e.what();
+        }
+        if constexpr (_Default_Result == JudgeResult::ScheduleFailed) {
+            error_message = "Schedule failed: ";
+            error_message += e.what();
+        }
     } else { // Unknown system error.
-        std::cerr << "System Error: " << e.what() << std::endl;
+        error_message = "System error: ";
+        error_message += e.what();
     }
-    std::exit(EXIT_FAILURE);
+
+    std::cerr << error_message << std::endl;
+    serialize_error(std::cout, std::move(error_message));
+
+    std::exit(EXIT_SUCCESS);
 }
 
 } // namespace oj::detail::runtime

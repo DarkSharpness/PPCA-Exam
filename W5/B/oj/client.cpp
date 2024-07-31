@@ -44,18 +44,19 @@ static auto judge(const Description &desc) {
 } // namespace oj::detail::runtime
 
 signed main() {
+    constexpr oj::Description array[] = {
+        oj::small,
+        oj::middle,
+        oj::senpai,
+        oj::huge,
+    };
+
     try {
+        int x;
+        std::cin >> x;
         using oj::detail::runtime::serialize;
         using oj::detail::runtime::judge;
-        constexpr oj::Description array[] = {
-            oj::small,
-            oj::middle,
-            oj::senpai,
-            oj::huge,
-        };
-        serialize(std::cout, { .description_count = std::size(array) });
-        for (const auto &desc : array)
-            judge(desc);
+        judge(array[x]);
     } catch (const std::exception &e) {
         std::cerr << "System Error: Unexpected std::exception(): " << e.what() << std::endl;
     } catch (...) {

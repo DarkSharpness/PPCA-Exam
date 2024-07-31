@@ -22,13 +22,12 @@ static auto grading_policy(priority_t std_ans, priority_t usr_ans) -> double {
     return ratio / 2;
 }
 
-static auto judge(
-    const Description &desc,
-    const ServiceInfo &std_info,
-    std::vector <Task> tasks) {
-
+static auto judge() {
     using enum JudgeResult;
     try {
+        auto [header, tasks] = deserialize(std::cin);
+        const auto &std_info = header.service_info;
+        const auto &desc     = header.description;
         auto info = schedule_work(desc, tasks);
 
         if (info.total != std_info.total)
@@ -49,12 +48,7 @@ signed main() {
     try {
         using oj::detail::runtime::judge;
         using oj::detail::runtime::deserialize;
-        using oj::detail::runtime::deserialize_main;
-        auto count = deserialize_main(std::cin);
-        while (count--) {
-            auto [header, tasks] = deserialize(std::cin);
-            judge(header.description, header.service_info, std::move(tasks));
-        }
+        judge();
     } catch (const std::exception &e) {
         std::cerr << "System Error: Unexpected std::exception(): " << e.what() << std::endl;
     } catch (...) {
