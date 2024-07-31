@@ -51,19 +51,23 @@ struct PublicInformation {
 };
 
 /**
- * @brief Suppose a task launched at x, saved at y.
- * Then the duration should be y - x.
- * If y - x < kStartUp + kSaving, the task can't be saved,
+ * @brief Suppose a task first launched at x, and start saving at y,
+ * then the duration should be y - x.
+ * (Note that the saving is completed at y + kSaving)
+ * 
+ * If duration < kStartUp, the task can't be saved,
  * and we should not count the contribution.
+ * 
  * Otherwise, we count the contribution by the multiplication
  * of effective core count and the effective duration.
- * @return The contribution (time) of the task.
+ * 
+ * @return The contribution (time) of the task within duration.
  */
 inline auto time_policy(time_t duration, cpu_id_t cpu_cnt) -> double {
-    if (duration < PublicInformation::kStartUp - PublicInformation::kSaving) return 0;
-    // Effective core count? (Maybe)
+    if (duration < PublicInformation::kStartUp) return 0;
     const auto effective_core = std::pow(cpu_cnt, 0.75);
-    return effective_core * (duration - PublicInformation::kStartUp - PublicInformation::kSaving);
+    const auto effective_time = duration - PublicInformation::kStartUp;
+    return effective_core * effective_time;
 }
 
 } // namespace oj
