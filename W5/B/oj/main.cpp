@@ -119,14 +119,16 @@ static auto judge(const oj::Description &desc) -> std::pair <JudgeResult, Servic
 }
 
 signed main() {
+    double complete_rate = 0.5;
     try {
         auto [result, info] = judge(oj::sample_description);
         switch (result) {
             case JudgeResult::Normal:
-                std::cout << "Complete rate: "
-                    << std::setprecision(6)
+                complete_rate = double(info.complete) / info.total;
+                std::cerr << "Complete rate: "
+                    << std::setprecision(2)
                     << std::fixed
-                    << 100 * double(info.complete) / info.total
+                    << 100 * complete_rate
                     << "% ("
                     << info.complete
                     << "/"
@@ -135,8 +137,13 @@ signed main() {
                     << std::endl;
                 break;
             case JudgeResult::SystemError:
+                break;
             case JudgeResult::GenerateFailed:
+                complete_rate = 1;
+                break;
             case JudgeResult::ScheduleFailed:
+                complete_rate = 0;
+                break;
             default: break;
         }
     } catch (const std::exception &e) {
@@ -144,5 +151,6 @@ signed main() {
     } catch (...) {
         std::cerr << "System Error: An unknown error occurred!" << std::endl;
     }
+    std::cout << complete_rate << std::endl;
     return 0;
 }
