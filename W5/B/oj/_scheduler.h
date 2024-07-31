@@ -118,7 +118,7 @@ auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy>
     return ret;
 }
 
-auto scheudle_reset(const Description &) -> void {
+auto schedule_reset(const Description &) -> void {
     manager.reset();
     cached_list.clear();
     task_count = 0;

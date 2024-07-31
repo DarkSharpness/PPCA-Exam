@@ -309,7 +309,18 @@ inline void serialize(
         panic <SystemException> ("File write failed.");
 }
 
-inline auto deserialize(std::istream &is) -> std::vector <Task> {
+inline auto deserialize_main(std::istream &is) -> std::size_t {
+    OJTask task;
+
+    is.read(std::bit_cast <char *> (&task), sizeof(OJTask));
+    if (task.magic != task.kMagic)
+        panic <UserException> ("Magic number mismatch.");
+
+    return task.description_count;
+}
+
+
+inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Task>> {
     Header header;
 
     is.read(std::bit_cast <char *> (&header), sizeof(Header));
@@ -323,7 +334,98 @@ inline auto deserialize(std::istream &is) -> std::vector <Task> {
     if (!is.good())
         panic <SystemException> ("File is corrupted.");
 
-    return vec;
+    return { std::move(header), std::move(vec) };
 }
 
 } // namespace oj
+
+// Sorted in length of the name.
+#include <span>
+#include <ranges>
+#include <iomanip>
+#include <iostream>
+#include <algorithm>
+
+using oj::panic;
+
+template <typename _Tp>
+static bool within(_Tp x, oj::Range <_Tp> range) {
+    return range.min <= x && x <= range.max;
+}
+
+static void check_tasks(std::span <const oj::Task> tasks, const oj::Description &desc) {
+    if (tasks.size() != desc.task_count)
+        panic("The number of tasks is not equal to the number of tasks.");
+
+    oj::time_t execution_time_sum   = 0;
+    oj::priority_t priority_sum     = 0;
+    for (const auto &task : tasks) {
+        if (task.launch_time >= task.deadline)
+            panic("The launch time is no earlier to the deadline.");
+
+        if (!within(task.deadline, desc.deadline_time))
+            panic("The deadline time is out of range.");
+
+        if (!within(task.execution_time, desc.execution_time_single))
+            panic("The execution time is out of range.");
+
+        if (!within(task.priority, desc.priority_single))
+            panic("The priority is out of range.");
+
+        execution_time_sum += task.execution_time;
+        priority_sum += task.priority;
+    }
+
+    if (!within(execution_time_sum, desc.execution_time_sum))
+        panic("The total execution time is out of range.");
+
+    if (!within(priority_sum, desc.priority_sum))
+        panic("The total priority is out of range.");
+}
+
+static auto generate_work(const oj::Description &desc) -> std::vector <oj::Task> {
+    auto tasks = oj::generate_tasks(desc);
+
+    std::ranges::sort(tasks, {}, &oj::Task::launch_time);
+
+    /* Check the tasks. */
+    check_tasks(tasks, desc);
+
+    return tasks;
+}
+
+static auto schedule_work(const oj::Description &desc, std::vector <oj::Task> tasks)
+-> oj::ServiceInfo {
+    oj::RuntimeManager manager { std::move(tasks) };
+    oj::schedule_reset(desc);
+    for (std::size_t i = 0; i <= desc.deadline_time.max; ++i) {
+        auto new_tasks = manager.synchronize();
+        if (i != manager.get_time())
+            panic <oj::SystemException> ("Time is not synchronized");
+        manager.work(oj::schedule_tasks(i, std::move(new_tasks)));
+    }
+
+    manager.synchronize();
+
+    return manager.get_service_info();
+}
+
+enum class JudgeResult {
+    GenerateFailed,
+    ScheduleFailed,
+};
+
+template <JudgeResult _Default_Result>
+[[noreturn]]
+static void handle_exception(const oj::OJException &e) {
+    if (dynamic_cast <const oj::UserException *> (&e)) {
+        if constexpr (_Default_Result == JudgeResult::GenerateFailed)
+            std::cerr << "Generate failed: " << e.what() << std::endl;
+        if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
+            std::cerr << "Schedule failed: " << e.what() << std::endl;
+    } else { // Unknown system error.
+        std::cerr << "System Error: " << e.what() << std::endl;
+    }
+    std::exit(EXIT_FAILURE);
+}
+
