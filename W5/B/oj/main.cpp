@@ -91,7 +91,10 @@ enum class JudgeResult {
 template <JudgeResult _Default_Result>
 static auto handle_exception(const oj::OJException &e) -> JudgeResult {
     if (dynamic_cast <const oj::UserException *> (&e)) {
-        std::cerr << "Generate failed: " << e.what() << std::endl;
+        if constexpr (_Default_Result == JudgeResult::GenerateFailed)
+            std::cerr << "Generate failed: " << e.what() << std::endl;
+        else if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
+            std::cerr << "Schedule failed: " << e.what() << std::endl;
         return _Default_Result;
     } else { // Unknown system error.
         std::cerr << "System Error: " << e.what() << std::endl;
