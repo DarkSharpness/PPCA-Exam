@@ -15,8 +15,13 @@
 #include <iostream>
 #include <filesystem>
 #include <unordered_set>
+#include <span>
+#include <ranges>
+#include <iomanip>
+#include <iostream>
+#include <algorithm>
 
-namespace oj {
+namespace oj::detail::runtime {
 
 struct OJException : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -337,28 +342,17 @@ inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Tas
     return { std::move(header), std::move(vec) };
 }
 
-} // namespace oj
-
-// Sorted in length of the name.
-#include <span>
-#include <ranges>
-#include <iomanip>
-#include <iostream>
-#include <algorithm>
-
-using oj::panic;
-
 template <typename _Tp>
-static bool within(_Tp x, oj::Range <_Tp> range) {
+static bool within(_Tp x, Range <_Tp> range) {
     return range.min <= x && x <= range.max;
 }
 
-static void check_tasks(std::span <const oj::Task> tasks, const oj::Description &desc) {
+static void check_tasks(std::span <const Task> tasks, const Description &desc) {
     if (tasks.size() != desc.task_count)
         panic("The number of tasks is not equal to the number of tasks.");
 
-    oj::time_t execution_time_sum   = 0;
-    oj::priority_t priority_sum     = 0;
+    time_t execution_time_sum   = 0;
+    priority_t priority_sum     = 0;
     for (const auto &task : tasks) {
         if (task.launch_time >= task.deadline)
             panic("The launch time is no earlier to the deadline.");
@@ -383,10 +377,11 @@ static void check_tasks(std::span <const oj::Task> tasks, const oj::Description 
         panic("The total priority is out of range.");
 }
 
-static auto generate_work(const oj::Description &desc) -> std::vector <oj::Task> {
-    auto tasks = oj::generate_tasks(desc);
+[[maybe_unused]]
+static auto generate_work(const Description &desc) -> std::vector <Task> {
+    auto tasks = generate_tasks(desc);
 
-    std::ranges::sort(tasks, {}, &oj::Task::launch_time);
+    std::ranges::sort(tasks, {}, &Task::launch_time);
 
     /* Check the tasks. */
     check_tasks(tasks, desc);
@@ -394,15 +389,16 @@ static auto generate_work(const oj::Description &desc) -> std::vector <oj::Task>
     return tasks;
 }
 
-static auto schedule_work(const oj::Description &desc, std::vector <oj::Task> tasks)
--> oj::ServiceInfo {
-    oj::RuntimeManager manager { std::move(tasks) };
-    oj::schedule_reset(desc);
+[[maybe_unused]]
+static auto schedule_work(const Description &desc, std::vector <Task> tasks)
+-> ServiceInfo {
+    RuntimeManager manager { std::move(tasks) };
+    schedule_reset(desc);
     for (std::size_t i = 0; i <= desc.deadline_time.max; ++i) {
         auto new_tasks = manager.synchronize();
         if (i != manager.get_time())
-            panic <oj::SystemException> ("Time is not synchronized");
-        manager.work(oj::schedule_tasks(i, std::move(new_tasks)));
+            panic <SystemException> ("Time is not synchronized");
+        manager.work(schedule_tasks(i, std::move(new_tasks)));
     }
 
     manager.synchronize();
@@ -417,8 +413,8 @@ enum class JudgeResult {
 
 template <JudgeResult _Default_Result>
 [[noreturn]]
-static void handle_exception(const oj::OJException &e) {
-    if (dynamic_cast <const oj::UserException *> (&e)) {
+static void handle_exception(const OJException &e) {
+    if (dynamic_cast <const UserException *> (&e)) {
         if constexpr (_Default_Result == JudgeResult::GenerateFailed)
             std::cerr << "Generate failed: " << e.what() << std::endl;
         if constexpr (_Default_Result == JudgeResult::ScheduleFailed)
@@ -429,3 +425,4 @@ static void handle_exception(const oj::OJException &e) {
     std::exit(EXIT_FAILURE);
 }
 
+} // namespace oj::detail::runtime

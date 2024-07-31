@@ -9,13 +9,15 @@
 // This is only for the judge.
 #include "runtime.h"
 
-static auto judge(const oj::Description &desc) {
+namespace oj::detail::runtime {
+
+static auto judge(const Description &desc) {
     using enum JudgeResult;
-    std::vector <oj::Task> tasks;
+    std::vector <Task> tasks;
 
     try {
         tasks = generate_work(desc);
-    } catch (const oj::OJException &e) {
+    } catch (const OJException &e) {
         handle_exception <GenerateFailed> (e);
     }
 
@@ -33,23 +35,27 @@ static auto judge(const oj::Description &desc) {
             << ")"
             << std::endl;
 
-        oj::serialize(std::cout, tasks, desc, info);
-    } catch (const oj::OJException &e) {
+        serialize(std::cout, tasks, desc, info);
+    } catch (const OJException &e) {
         handle_exception <ScheduleFailed> (e);
     }
 }
 
+} // namespace oj::detail::runtime
+
 signed main() {
     try {
-        using namespace oj;
-        constexpr Description array[] = {
-            small,
-            middle,
-            senpai,
-            huge,
+        using oj::detail::runtime::serialize;
+        using oj::detail::runtime::judge;
+        constexpr oj::Description array[] = {
+            oj::small,
+            oj::middle,
+            oj::senpai,
+            oj::huge,
         };
         serialize(std::cout, { .description_count = std::size(array) });
-        for (const auto &desc : array) judge(desc);
+        for (const auto &desc : array)
+            judge(desc);
     } catch (const std::exception &e) {
         std::cerr << "System Error: Unexpected std::exception(): " << e.what() << std::endl;
     } catch (...) {
