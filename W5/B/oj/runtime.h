@@ -279,7 +279,7 @@ struct Header {
         std::size_t(0x4B524144) << 32 | std::size_t(0x54414857);
 };
 
-inline void serialize_error(std::ostream &os, std::string msg) {
+inline void serialize_error(std::ostream &os, const std::string &msg) {
     const auto header = Header {
         .task_count   = 0,
         .description  = {},
@@ -314,19 +314,18 @@ inline void serialize(
         panic <SystemException> ("File write failed.");
 }
 
-inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Task>> {
+inline auto deserialize_error(std::istream &is) -> std::string {
     Header header;
-
     is.read(std::bit_cast <char *> (&header), sizeof(Header));
 
     if (header.magic != header.kMagic) {
-        serialize_error(std::cout, "System Error: Not handled in the spj!");
-        std::exit(EXIT_SUCCESS);
+        return "User Error: What the fuck did you output?";
     }
 
     if (header.error_occur) {
-        serialize_error(std::cout, "System Error: Not handled in the spj!");
-        std::exit(EXIT_SUCCESS);
+        std::string message(header.error_length, '\0');
+        is.read(message.data(), header.error_length);
+        return message;
     }
 
     std::vector <Task> vec(header.task_count);
@@ -334,9 +333,30 @@ inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Tas
     is.read(std::bit_cast <char *> (vec.data()), size);
 
     if (!is.good()) {
-        serialize_error(std::cout, "System Error: Not handled in the spj!");
-        std::exit(EXIT_SUCCESS);
+        return "System Error: File incomplete.";
     }
+
+    return {};
+}
+
+
+inline auto deserialize(std::istream &is) -> std::pair <Header, std::vector <Task>> {
+    Header header;
+
+    is.read(std::bit_cast <char *> (&header), sizeof(Header));
+
+    if (header.magic != header.kMagic)
+        panic <SystemException> ("System Error: Not handled in the spj!");
+
+    if (header.error_occur)
+        panic <SystemException> ("System Error: Not handled in the spj!");
+
+    std::vector <Task> vec(header.task_count);
+    const auto size = vec.size() * sizeof(Task);
+    is.read(std::bit_cast <char *> (vec.data()), size);
+
+    if (!is.good())
+        panic <SystemException> ("System Error: Not handled in the spj!");
 
     return { std::move(header), std::move(vec) };
 }
@@ -353,6 +373,14 @@ static void check_tasks(std::span <const Task> tasks, const Description &desc) {
     time_t execution_time_sum   = 0;
     priority_t priority_sum     = 0;
     for (const auto &task : tasks) {
+        if (task.launch_time +
+            oj::PublicInformation::kSaving +
+            oj::PublicInformation::kStartUp +
+            (double)task.execution_time /
+            pow(oj::PublicInformation::kCPUCount, oj::PublicInformation::kAccel)
+            >= task.deadline)
+            panic("The task is impossible to finish.");
+
         if (task.launch_time >= task.deadline)
             panic("The launch time is no earlier to the deadline.");
 
@@ -409,29 +437,5 @@ enum class JudgeResult {
     GenerateFailed,
     ScheduleFailed,
 };
-
-template <JudgeResult _Default_Result>
-[[noreturn]]
-static void handle_exception(const OJException &e) {
-    std::string error_message;
-    if (dynamic_cast <const UserException *> (&e)) {
-        if constexpr (_Default_Result == JudgeResult::GenerateFailed) {
-            error_message = "Generate failed: ";
-            error_message += e.what();
-        }
-        if constexpr (_Default_Result == JudgeResult::ScheduleFailed) {
-            error_message = "Schedule failed: ";
-            error_message += e.what();
-        }
-    } else { // Unknown system error.
-        error_message = "System error: ";
-        error_message += e.what();
-    }
-
-    std::cerr << error_message << std::endl;
-    serialize_error(std::cout, std::move(error_message));
-
-    std::exit(EXIT_SUCCESS);
-}
 
 } // namespace oj::detail::runtime

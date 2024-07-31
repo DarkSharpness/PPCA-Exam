@@ -24,6 +24,7 @@ static auto grading_policy(priority_t std_ans, priority_t usr_ans) -> double {
 
 static auto judge() {
     using enum JudgeResult;
+    std::string error_message;
     try {
         auto [header, tasks] = deserialize(std::cin);
         const auto &std_info = header.service_info;
@@ -37,22 +38,32 @@ static auto judge() {
         const auto usr_ans = info.complete;
 
         std::cout << grading_policy(std_ans, usr_ans) << std::endl;
+        return;
     } catch (const OJException &e) {
-        handle_exception <ScheduleFailed> (e);
+        if (dynamic_cast <const UserException *> (&e)) {
+            error_message = "Schedule failed: ";
+        } else { // Unknown system error.
+            error_message = "System error: ";
+        }
+        error_message += e.what();
+    } catch (const std::exception &e) {
+        error_message = "System error: Unexpected std::exception(): ";
+        error_message += e.what();
+    } catch (...) {
+        error_message = "System error: An unknown error occurred!";
     }
+
+    // Error handling here.
+    std::cout << -1 << std::endl;
+    std::cout << error_message << std::endl;
+
+    std::cerr << error_message << std::endl;
 }
 
 } // namespace oj::detail::runtime
 
 signed main() {
-    try {
-        using oj::detail::runtime::judge;
-        using oj::detail::runtime::deserialize;
-        judge();
-    } catch (const std::exception &e) {
-        std::cerr << "System Error: Unexpected std::exception(): " << e.what() << std::endl;
-    } catch (...) {
-        std::cerr << "System Error: An unknown error occurred!" << std::endl;
-    }
+    using oj::detail::runtime::judge;
+    judge();
     return 0;
 }

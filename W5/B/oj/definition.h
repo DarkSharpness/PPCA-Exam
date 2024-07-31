@@ -117,4 +117,11 @@ constexpr Description huge = {
     .priority_sum           = { .min = 10,   .max = 10000000 },
 };
 
+constexpr oj::Description testcase_array[] = {
+    small,
+    middle,
+    senpai,
+    huge,
+};
+
 } // namespace oj
