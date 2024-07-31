@@ -52,6 +52,7 @@ struct PublicInformation {
     static constexpr cpu_id_t kCPUCount = 114;
     static constexpr time_t   kStartUp  = 2;
     static constexpr time_t   kSaving   = 2;
+    static constexpr double   kAccel    = 0.75;
 };
 
 /**
@@ -69,7 +70,7 @@ struct PublicInformation {
  */
 inline auto time_policy(time_t duration, cpu_id_t cpu_cnt) -> double {
     if (duration < PublicInformation::kStartUp) return 0;
-    const auto effective_core = std::pow(cpu_cnt, 0.75);
+    const auto effective_core = std::pow(cpu_cnt, PublicInformation::kAccel);
     const auto effective_time = duration - PublicInformation::kStartUp;
     return effective_core * effective_time;
 }
@@ -83,7 +84,7 @@ inline constexpr Description senpai = {
     .execution_time_single  = { .min = 1,   .max = int(1e4) },
     .execution_time_sum     = { .min = int(2e5), .max = 1919810  },
     .priority_single        = { .min = 1,   .max = 114514   },
-    .priority_sum           = { .min = 1,   .max = 1919810  },
+    .priority_sum           = { .min = 10,   .max = 1919810  },
 };
 
 constexpr Description small = {
@@ -92,8 +93,8 @@ constexpr Description small = {
     .deadline_time          = { .min = 1, .max = 900        }, 
     .execution_time_single  = { .min = 1, .max = 100        },
     .execution_time_sum     = { .min = 1, .max = 10000      },
-    .priority_single        = { .min = 1, .max = 20         },
-    .priority_sum           = { .min = 1, .max = 10000      },
+    .priority_single        = { .min = 10, .max = 20         },
+    .priority_sum           = { .min = 10, .max = 10000      },
 };
 
 constexpr Description middle = {
@@ -103,7 +104,7 @@ constexpr Description middle = {
     .execution_time_single  = { .min = 100, .max = 10000    },
     .execution_time_sum     = { .min = 50000000, .max = 99999999 },
     .priority_single        = { .min = 1,   .max = 1000     },
-    .priority_sum           = { .min = 1,   .max = 10000000 },
+    .priority_sum           = { .min = 10,   .max = 10000000 },
 };
 
 constexpr Description huge = {
@@ -113,7 +114,7 @@ constexpr Description huge = {
     .execution_time_single  = { .min = 999, .max = 100000   },
     .execution_time_sum     = { .min = 1,   .max = 999999999 },
     .priority_single        = { .min = 1,   .max = 1000     },
-    .priority_sum           = { .min = 1,   .max = 10000000 },
+    .priority_sum           = { .min = 10,   .max = 10000000 },
 };
 
 } // namespace oj
