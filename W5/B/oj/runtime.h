@@ -12,8 +12,9 @@
 #include <bit>
 #include <span>
 #include <fstream>
-#include <iostream>     // For local debug only
-#include <filesystem>   // For local debug only
+#include <iostream>
+#include <filesystem>
+#include <unordered_set>
 
 namespace oj {
 
@@ -71,14 +72,14 @@ private:
     void launch_check(const Launch &command) const {
         const auto [cpu_cnt, task_id] = command;
         if (cpu_cnt == 0)
-            panic("CPU count should not be zero.");
+            panic("Launch: CPU count should not be zero.");
         if (cpu_cnt > kCPUCount)
-            panic("CPU count exceeds the kMaxCPU limit.");
+            panic("Launch: CPU count exceeds the kMaxCPU limit.");
         if (task_id >= global_tasks)
-            panic("Task ID out of range.");
+            panic("Launch: Task ID out of range.");
         const auto &workload = task_state[task_id].workload;
         if (!holds_alternative <TaskFree> (workload))
-            panic("Task is not free.");
+            panic("Launch: Task is not free.");
     }
 
     // From free -> launch.
@@ -97,11 +98,11 @@ private:
     void saving_check(const Saving &command) const {
         const auto [task_id] = command;
         if (task_id >= global_tasks)
-            panic("Task ID out of range.");
+            panic("Saving: Task ID out of range.");
 
         const auto &workload = task_state[task_id].workload;
         if (!holds_alternative <TaskLaunch> (workload))
-            panic("Task is not launched.");
+            panic("Saving: Task is not launched.");
     }
 
     // From launch -> saving.
@@ -113,13 +114,39 @@ private:
         const auto &launch = get <TaskLaunch> (workload);
         const auto time_sum = this->time_policy(launch);
 
-        task_saving.push_back(&task);
+        task_saving.insert(&task);
+
         auto [cpu_cnt, start] = launch;
         workload = TaskSaving {
             .cpu_cnt    = cpu_cnt,
             .finish     = get_time() + kSaving,
             .time_passed = time_sum,
         };
+    }
+
+    void cancel_check(const Cancel &command) const {
+        const auto [task_id] = command;
+        if (task_id >= global_tasks)
+            panic("Cancel: Task ID out of range.");
+    }
+
+    void cancel_commit(const Cancel &command) {
+        const auto [task_id] = command;
+        auto &task = task_state[task_id];
+        auto &workload = task.workload;
+
+        if (holds_alternative <TaskLaunch> (workload)) {
+            // From launch -> free.
+            auto &launch = get <TaskLaunch> (workload);
+            this->cpu_usage -= launch.cpu_cnt;
+        } else if (holds_alternative <TaskSaving> (workload)) {
+            // From saving -> free.
+            auto &saving = get <TaskSaving> (workload);
+            this->cpu_usage -= saving.cpu_cnt;
+            this->task_saving.erase(&task);
+        }
+
+        workload = TaskFree {};
     }
 
     /* Counting all the tasks in this cycle. */
@@ -136,15 +163,18 @@ private:
     }
 
     void work(const Launch &command) {
-        // std::cerr << "Commit launch " << command.task_id << ' ' << command.cpu_cnt << std::endl;
         this->launch_check(command);
         this->launch_commit(command);
     }
 
     void work(const Saving &command) {
-        // std::cerr << "Commit saving " << command.task_id << std::endl;
         this->saving_check(command);
         this->saving_commit(command);
+    }
+
+    void work(const Cancel &command) {
+        this->cancel_check(command);
+        this->cancel_commit(command);
     }
 
     /* Remove those outdated saving file within.  */
@@ -155,23 +185,23 @@ private:
         while (begin != finish) {
             auto &task = **begin;
             auto &workload = task.workload;
-            if (holds_alternative <TaskSaving> (workload)) {
-                auto &saving = get <TaskSaving> (workload);
-                if (saving.finish == this->get_time()) {
-                    cpu_usage -= saving.cpu_cnt;
-                    if (this->get_time() <= task.deadline)
-                        task.time_passed += saving.time_passed;
-                    workload = TaskFree {};
-                    std::swap(*begin, *--finish);
-                } else {
-                    ++begin;
-                }
-            } else {
-                ++begin;
-            }
-        }
+            auto &saving = get <TaskSaving> (workload);
 
-        task_saving.resize(finish - task_saving.begin());
+            if (saving.finish != this->get_time()) {
+                ++begin; continue;
+            }
+
+            // From saving -> free.
+
+            cpu_usage -= saving.cpu_cnt;
+
+            if (this->get_time() <= task.deadline) {
+                task.time_passed += saving.time_passed;
+                workload = TaskFree {};
+            }
+
+            begin = task_saving.erase(begin);
+        }
     }
 
 public:
@@ -199,7 +229,6 @@ public:
     }
 
     void work(std::vector <Policy> p) {
-        // if (!p.empty()) std::cerr << "Work at " << this->get_time() << std::endl;
         for (const auto &policy : p) {
             std::visit([this](const auto &command) { this->work(command); }, policy);
         }
@@ -229,7 +258,7 @@ private:
 
     const std::vector <Task> task_list;         // A list of tasks
     std::vector <TaskStatus> task_state;        // A list of task status
-    std::vector <TaskStatus *> task_saving;     // A list of working tasks
+    std::unordered_set <TaskStatus *> task_saving; // A list of free tasks
 };
 
 static_assert(std::is_standard_layout_v <Task>);

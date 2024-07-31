@@ -43,6 +43,10 @@ struct Saving {
     task_id_t   task_id;
 };
 
+struct Cancel {
+    task_id_t   task_id;
+};
+
 struct PublicInformation {
     static constexpr time_t   kMaxTime  = 1e8;
     static constexpr cpu_id_t kCPUCount = 114;

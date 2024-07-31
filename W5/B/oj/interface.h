@@ -14,8 +14,9 @@ struct Task;
 struct Description;
 struct Launch;
 struct Saving;
+struct Cancel;
 
-using Policy = std::variant<Launch, Saving>;
+using Policy = std::variant<Launch, Saving, Cancel>;
 
 /**
  * @brief Generator side.
