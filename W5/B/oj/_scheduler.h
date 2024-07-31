@@ -82,11 +82,6 @@ private:
     std::unordered_map <time_t, cpu_id_t> saved_tasks;
 };
 
-
-static StateManager manager;
-static std::vector <Task *> cached_list;
-static std::size_t task_count = 0;
-
 /**
  * @brief Scheduler side.
  * You need to arrange dynamically generated tasks.
@@ -97,6 +92,10 @@ static std::size_t task_count = 0;
  * @param desc Description of the tasks. Same as the one used in generate_tasks.
  */
 auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy> {
+    static StateManager manager;
+    static std::vector <Task *> cached_list;
+    static std::size_t task_count = 0;
+
     cached_list.resize(list.size());
     for (std::size_t i = 0; i < list.size(); i++)
         cached_list[i] = &list[i];
@@ -116,12 +115,6 @@ auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy>
 
     task_count += list.size();
     return ret;
-}
-
-auto schedule_reset(const Description &) -> void {
-    manager.reset();
-    cached_list.clear();
-    task_count = 0;
 }
 
 } // namespace oj

@@ -38,11 +38,4 @@ auto generate_tasks(const Description &desc) -> std::vector <Task>;
  */
 auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy>;
 
-/**
- * @brief Scheduler side.
- * Initialize the scheduler function.
- * @param desc Description of the tasks. Same as the one used in generate_tasks.
- */
-auto schedule_reset(const Description &desc) -> void;
-
 } // namespace oj

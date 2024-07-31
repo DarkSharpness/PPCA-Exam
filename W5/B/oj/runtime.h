@@ -392,7 +392,7 @@ static auto generate_work(const Description &desc) -> std::vector <Task> {
 static auto schedule_work(const Description &desc, std::vector <Task> tasks)
 -> ServiceInfo {
     RuntimeManager manager { std::move(tasks) };
-    schedule_reset(desc);
+
     for (std::size_t i = 0; i <= desc.deadline_time.max; ++i) {
         auto new_tasks = manager.synchronize();
         if (i != manager.get_time())
