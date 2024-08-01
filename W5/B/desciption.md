@@ -110,7 +110,7 @@ sh run.sh
 
 #### 关于本地评测和 OJ 提交
 
-你可以在命令行输入 `sh run.sh` 来测试你的 `generator` 和 `scheduler` 的正确性。输入看到输出 `1 Accepted` 即为正确。
+你可以在命令行输入 `sh run.sh` 来测试你的 `generator` 和 `scheduler` 的正确性。
 
 在上传到 OJ 的时候， 你需要将 `src.hpp` 移除 `#include "interface.h"` 和 `#include "definition.h"` 两行 (别问, 问就是 feature).
 
