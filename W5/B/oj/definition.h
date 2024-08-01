@@ -104,7 +104,7 @@ constexpr Description middle = {
     .execution_time_single  = { .min = 100, .max = 10000    },
     .execution_time_sum     = { .min = 50000000, .max = 99999999 },
     .priority_single        = { .min = 1,   .max = 1000     },
-    .priority_sum           = { .min = 10,   .max = 10000000 },
+    .priority_sum           = { .min = 1,   .max = 10000000 },
 };
 
 constexpr Description huge = {
@@ -114,7 +114,7 @@ constexpr Description huge = {
     .execution_time_single  = { .min = 999, .max = 100000   },
     .execution_time_sum     = { .min = 1,   .max = 999999999 },
     .priority_single        = { .min = 1,   .max = 1000     },
-    .priority_sum           = { .min = 10,   .max = 10000000 },
+    .priority_sum           = { .min = 1,   .max = 10000000 },
 };
 
 constexpr oj::Description testcase_array[] = {

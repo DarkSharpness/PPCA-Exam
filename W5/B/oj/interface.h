@@ -35,7 +35,8 @@ auto generate_tasks(const Description &desc) -> std::vector <Task>;
  * That is, you need to optimize the scheduling of tasks.
  * @param time Current time.
  * @param list A list of tasks that need to be scheduled at the current time.
+ * @param desc Description of the tasks, same as the one in generate_tasks.
  */
-auto schedule_tasks(time_t time, std::vector <Task> list) -> std::vector<Policy>;
+auto schedule_tasks(time_t time, std::vector <Task> list, const Description &desc) -> std::vector<Policy>;
 
 } // namespace oj

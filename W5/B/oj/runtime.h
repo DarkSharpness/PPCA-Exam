@@ -1,25 +1,21 @@
 #pragma once
 #include "interface.h"
 #include "definition.h"
-#include <array>
-#include <vector>
-#include <variant>
-#include <optional>
-#include <stdexcept>
-#include <cmath>
-#include <algorithm>
-#include <ranges>
 #include <bit>
 #include <span>
-#include <fstream>
-#include <iostream>
-#include <filesystem>
-#include <unordered_set>
-#include <span>
+#include <cmath>
+#include <array>
 #include <ranges>
+#include <vector>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <variant>
+#include <optional>
 #include <algorithm>
+#include <stdexcept>
+#include <filesystem>
+#include <unordered_set>
 
 namespace oj::detail::runtime {
 
@@ -266,6 +262,11 @@ private:
     std::unordered_set <TaskStatus *> task_saving; // A list of free tasks
 };
 
+} // oj::detail::runtime
+
+/* Some other functions. */
+namespace oj::detail::runtime {
+
 struct Header {
     std::size_t task_count;
     Description description;
@@ -425,7 +426,7 @@ static auto schedule_work(const Description &desc, std::vector <Task> tasks)
         auto new_tasks = manager.synchronize();
         if (i != manager.get_time())
             panic <SystemException> ("Time is not synchronized");
-        manager.work(schedule_tasks(i, std::move(new_tasks)));
+        manager.work(schedule_tasks(i, std::move(new_tasks), desc));
     }
 
     manager.synchronize();
