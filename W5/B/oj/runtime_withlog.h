@@ -161,11 +161,10 @@ private:
             auto &saving = get <TaskSaving> (workload);
             this->cpu_usage -= saving.cpu_cnt;
             this->task_saving.erase(&task);
-            auto &launch = get <TaskLaunch> (workload);
             this->logging << "Cancel a saving: "
                 << "Task ID: " << task_id << ", "
                 << "CPU Count: " << saving.cpu_cnt << ", "
-                << "Start Saving time" << launch.start << ", "
+                << "Start Saving time" << saving.finish - PublicInformation::kSaving << ", "
                 << "Current Time: " << get_time() << std::endl;
         } else {
             this->logging << "Cancel a free(nothing happens): "
