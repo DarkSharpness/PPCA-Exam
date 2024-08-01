@@ -16,10 +16,62 @@ static auto min_time_required(time_t target) -> time_t {
     while (time_policy(i, PublicInformation::kCPUCount)
         < target)
         ++i;
-    return i * 1.1 + 1;
+    return i * 1.2 + 1;
 }
 
 auto generate_tasks(const Description &desc) -> std::vector <Task> {
+    if (desc.task_count == 1000) {
+        const Task template_task = {
+            .launch_time    = 1,
+            .deadline       = 1 + 10,
+            .execution_time = 9,
+            .priority       = 10
+        };
+
+        constexpr time_t kOffset = 200;
+        std::vector <Task> tasks { desc.task_count, template_task };
+
+        std::mt19937 gen { 1919810 };
+
+        for (auto &task : tasks) {
+            auto offset = gen() % kOffset;
+            task.launch_time += offset;
+            task.deadline    += offset;
+        }
+
+        return tasks;
+    }
+    if (desc.task_count == 114514) {
+        const Task template_task = {
+            .launch_time    = 1,
+            .deadline       = 1 + 20,
+            .execution_time = 3,
+            .priority       = 1,
+        };
+        std::mt19937 gen { 1919810 };
+
+        std::vector <Task> tasks { desc.task_count, template_task };
+
+        constexpr std::size_t kMagic = 12;
+        for (auto &task : tasks) {
+            task.launch_time    += gen() % kMagic;
+            task.deadline       += gen() % kMagic;
+            task.execution_time += gen() % kMagic;
+            task.priority       += gen() % kMagic;
+            if (gen() % 20) {
+                const auto rest = desc.deadline_time.max - task.deadline;
+                if (rest > 0) {
+                    const auto offset = gen() % rest;
+                    task.launch_time += offset;
+                    task.deadline    += offset;
+                }
+            }
+        }
+
+        return tasks;
+    }
+
+
     const auto min_duration = 1 +
         std::max(
             desc.execution_time_sum.min / desc.task_count,
