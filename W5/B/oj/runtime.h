@@ -198,8 +198,9 @@ private:
 
             if (this->get_time() <= task.deadline) {
                 task.time_passed += saving.time_passed;
-                workload = TaskFree {};
             }
+
+            workload = TaskFree {};
 
             begin = task_saving.erase(begin);
         }
