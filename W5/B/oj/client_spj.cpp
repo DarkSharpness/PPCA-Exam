@@ -13,6 +13,18 @@ static void check_error(std::istream &output, std::ostream &score, std::ostream 
     }
 }
 
+namespace oj {
+
+auto generate_tasks(const Description &) -> std::vector <Task> {
+    return {};
+}
+
+auto schedule_tasks(time_t, std::vector <Task>, const Description &) -> std::vector<Policy> {
+    return {};
+}
+
+} // namespace oj
+
 signed main(int argc, char *argv[]) {
     if (argc != 6) {
         std::cerr << "Usage: " << argv[0] << " <input> <output> <answer> <score> <message>\n";

@@ -1,12 +1,5 @@
-// These 2 are visible to all.
-#include "interface.h"
-#include "definition.h"
-
-// This is your implementations.
-#include "src.hpp"
-
-// This is only for the judge.
 #include "runtime.h"
+#include "src.hpp"
 
 namespace oj::detail::runtime {
 
